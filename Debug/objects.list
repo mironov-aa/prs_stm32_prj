@@ -1,4 +1,7 @@
 "CMSIS/src/system_stm32f0xx.o"
+"Code/src/PRMS_Initialize.o"
+"Code/src/PRMS_Interrupts.o"
+"Code/src/PRMS_Tasks.o"
 "Code/src/main.o"
 "FreeRTOS/src/croutine.o"
 "FreeRTOS/src/event_groups.o"
