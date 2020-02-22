@@ -1,3 +1,4 @@
-.settings
-.project
+.settings/
+.project/
 Debug/
+Diploma_optimus Debug.launch

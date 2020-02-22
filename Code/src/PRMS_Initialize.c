@@ -35,6 +35,7 @@ void GpioInitialize(void)
 	//Enable clock for port A and C
 	RCC->AHBENR |= (uint32_t)(RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIOAEN);
 //******************************  GPIOC  ******************************//
+
 	//PC8 configuration. vLed1Task indicator
 	GPIOC->MODER |= GPIO_MODER_MODER8_0;//General Purpose output mode
 	GPIOC->OTYPER &= ~GPIO_OTYPER_OT_8;	//push-pull
@@ -55,6 +56,8 @@ void GpioInitialize(void)
 	GPIOC->OTYPER &= ~GPIO_OTYPER_OT_6;		//Push-pull
 	GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6_0; //medium speed
 //******************************  GPIOA  ******************************//
+
+	//PA0 Configuration. User button
 	GPIOA->MODER &= (uint32_t)(~GPIO_MODER_MODER0);	//Input Mode
 	GPIOA->PUPDR |= GPIO_PUPDR_PUPDR0_1;//Pull down
 }
