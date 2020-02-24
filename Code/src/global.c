@@ -14,4 +14,4 @@ TaskHandle_t g_buttonHandler = NULL;
 TaskHandle_t g_fpgaHandler = NULL;
 TaskHandle_t g_ledHandler = NULL;
 
-volatile uint16_t g_dataArray[8] = {0};
+volatile uint16_t g_dataBuffer[8] = {0};

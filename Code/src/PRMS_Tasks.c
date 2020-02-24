@@ -16,11 +16,11 @@ extern TaskHandle_t g_ledHandler;
 void vButtonTask(void* argument)
 {
 	g_buttonHandler = xTaskGetCurrentTaskHandle();
-	uint32_t InterruptFlag;
+	uint32_t interruptFlag;
 	while(1)
 	{
-		InterruptFlag = ulTaskNotifyTake((uint32_t)~0, portMAX_DELAY);
-		if(InterruptFlag == ((uint32_t)~0))
+		interruptFlag = ulTaskNotifyTake((uint32_t)~0, portMAX_DELAY);
+		if(interruptFlag == ((uint32_t)~0))
 		{
 			if((GPIOC->ODR & GPIO_ODR_6))
 			{
@@ -46,10 +46,17 @@ void vFpgaTask(void* argument)
 	vTaskSuspend(g_fpgaHandler);
 	while(1)
 	{
-		GPIOC->BSRR |= GPIO_BSRR_BR_8;
-		vTaskDelay(1000);
-		GPIOC->BSRR |= GPIO_BSRR_BS_8;
-		vTaskDelay(1000);
+		//TODO: Chip select = 0;
+		//TODO: 16byte!!!;
+		for(uint16_t i = 0; i < (uint16_t)8; i++)//Start transmission(16byte). In the interrupt handler place received data in the g_dataBuffer[8];
+		{
+			while(!(SPI1->SR & SPI_SR_TXE)){};//Wait till transmit buffer be empty
+			*(uint16_t*)&SPI2->DR = (uint16_t)i+1;//TODO: test bytes!!!
+			*(uint16_t*)&SPI1->DR = 0;//Send dummy bytes that clock slave.
+		}
+		//TODO: Chip select = 1;
+		//TODO: Notify to MemoryTask!
+		vTaskDelay(10*portTICK_PERIOD_MS);
 	}
 }
 
