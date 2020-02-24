@@ -7,15 +7,11 @@
 #ifndef INC_PRMS_TASKS_H_
 #define INC_PRMS_TASKS_H_
 
-TaskHandle_t __BUTTON_HANDLER__ = NULL;
-TaskHandle_t __LED2_HANDLER__ = NULL;
-TaskHandle_t __LED1_HANDLER__ = NULL;
-
-
 //PRMS tasks
-void vLed1Task(void* argument);
-void vLed2Task(void* argument);
 void vButtonTask(void* argument);
+void vFpgaTask(void* argument);
+void vLedTask(void* argument);
+
 
 //Default FreeRTOS tasks
 void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char* pcTaskName);

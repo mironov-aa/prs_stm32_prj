@@ -1,7 +1,7 @@
 
 #include "stm32f0xx.h"
-#include "PRMS_Initialize.h"
-extern uint8_t __isHseStart;
+
+extern uint8_t g_isHseStart;
 
 #if !defined  (HSE_VALUE) 
   #define HSE_VALUE    ((uint32_t)8000000) /*!< Default value of the External oscillator in Hz.
@@ -137,7 +137,7 @@ static void SetSysClock(void)
   if((RCC->CR & RCC_CR_HSERDY))
   {
 	  //If HSE start
-	  __IS_HSE_START__ = 1;//Set HSE Flag true
+	  g_isHseStart = 1;//Set HSE Flag true
 	  /* PLL configuration = (HSE/PREDiv)*PLLMUL = (8/1)*6 = 48 */
 	  RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLMUL));
 	  RCC->CFGR |= (uint32_t)((RCC_CFGR_PLLSRC_HSE_PREDIV | RCC_CFGR_PLLMUL6));
@@ -145,7 +145,7 @@ static void SetSysClock(void)
   else
   {
 	  //If HSE don't start
-	  __IS_HSE_START__ = 0;//Set HSE Flag false
+	  g_isHseStart = 0;//Set HSE Flag false
 	  /* PLL configuration = (HSI/2) * 12 = ~48 MHz */
 	  RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLMUL));
 	  RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_HSI_DIV2 | RCC_CFGR_PLLMUL12);

@@ -4,33 +4,25 @@
  *  Created on: Feb 21, 2020
  *      Author: mironov-aa
  */
-#include "PRMS_Initialize.h"
+#include "stm32f0xx.h"
+#include "PRMS_Configure.h"
 
-void PrmsInitialize(void)
+extern uint8_t g_isHseStart;
+
+void ConfigurePrms(void)
 {
-	GpioInitialize();
+	ConfigureGpio();
 
-	if(!__IS_HSE_START__)
+	if(!g_isHseStart)
 	{
 		GPIOC->BSRR |= GPIO_BSRR_BS_7; //Warning if HSE don't start!
 	}
 
-	InterruptInitialize();
+	CongigureInterrupts();
 
 }
 
-void InterruptInitialize(void)
-{
-	//Configure NVIC for user button on PA0
-	NVIC_EnableIRQ(EXTI0_1_IRQn);
-	NVIC_SetPriority(EXTI0_1_IRQn, 0);
-
-	//Set up EXTI
-	EXTI->RTSR |= EXTI_RTSR_RT0; //Rising Edge for line 0
-	EXTI->IMR |= EXTI_IMR_IM0; //Interrupt mask for line 0
-}
-
-void GpioInitialize(void)
+static inline void ConfigureGpio(void)
 {
 	//Enable clock for port A and C
 	RCC->AHBENR |= (uint32_t)(RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIOAEN);
@@ -61,3 +53,16 @@ void GpioInitialize(void)
 	GPIOA->MODER &= (uint32_t)(~GPIO_MODER_MODER0);	//Input Mode
 	GPIOA->PUPDR |= GPIO_PUPDR_PUPDR0_1;//Pull down
 }
+
+static inline void CongigureInterrupts(void)
+{
+	//Configure NVIC for user button on PA0
+	NVIC_EnableIRQ(EXTI0_1_IRQn);
+	NVIC_SetPriority(EXTI0_1_IRQn, 0);
+
+	//Set up EXTI
+	EXTI->RTSR |= EXTI_RTSR_RT0; //Rising Edge for line 0
+	EXTI->IMR |= EXTI_IMR_IM0; //Interrupt mask for line 0
+}
+
+

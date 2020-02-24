@@ -9,9 +9,13 @@
 #include "task.h"
 #include "PRMS_Tasks.h"
 
+extern TaskHandle_t g_buttonHandler;
+extern TaskHandle_t g_fpgaHandler;
+extern TaskHandle_t g_ledHandler;
+
 void vButtonTask(void* argument)
 {
-	__BUTTON_HANDLER__ = xTaskGetCurrentTaskHandle();
+	g_buttonHandler = xTaskGetCurrentTaskHandle();
 	uint32_t InterruptFlag;
 	while(1)
 	{
@@ -20,15 +24,15 @@ void vButtonTask(void* argument)
 		{
 			if((GPIOC->ODR & GPIO_ODR_6))
 			{
-				vTaskSuspend(__LED1_HANDLER__);
-				vTaskSuspend(__LED2_HANDLER__);
+				vTaskSuspend(g_fpgaHandler);
+				vTaskSuspend(g_ledHandler);
 				GPIOC->BSRR |= GPIO_BSRR_BR_8;
 				GPIOC->BSRR |= GPIO_BSRR_BR_9;
 			}
 			else
 			{
-				vTaskResume(__LED1_HANDLER__);
-				vTaskResume(__LED2_HANDLER__);
+				vTaskResume(g_fpgaHandler);
+				vTaskResume(g_ledHandler);
 			}
 			GPIOC->ODR ^= GPIO_ODR_6;
 		}
@@ -36,10 +40,10 @@ void vButtonTask(void* argument)
 	}
 }
 
-void vLed1Task(void* argument)
+void vFpgaTask(void* argument)
 {
-	__LED1_HANDLER__ = xTaskGetCurrentTaskHandle();
-	vTaskSuspend(__LED1_HANDLER__);
+	g_fpgaHandler = xTaskGetCurrentTaskHandle();
+	vTaskSuspend(g_fpgaHandler);
 	while(1)
 	{
 		GPIOC->BSRR |= GPIO_BSRR_BR_8;
@@ -49,10 +53,10 @@ void vLed1Task(void* argument)
 	}
 }
 
-void vLed2Task(void* argument)
+void vLedTask(void* argument)
 {
-	__LED2_HANDLER__ = xTaskGetCurrentTaskHandle();
-	vTaskSuspend(__LED2_HANDLER__);
+	g_ledHandler = xTaskGetCurrentTaskHandle();
+	vTaskSuspend(g_ledHandler);
 	while(1)
 	{
 		GPIOC->BSRR |= GPIO_BSRR_BS_9;

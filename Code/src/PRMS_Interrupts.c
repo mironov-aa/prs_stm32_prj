@@ -9,10 +9,11 @@
 #include "task.h"
 #include "PRMS_Interrupts.h"
 
-extern TaskHandle_t __BUTTON_HANDLER__;
+extern TaskHandle_t g_buttonHandler;
+extern uint16_t g_dataArray[8];
 
 void EXTI0_1_IRQHandler(void)
 {
-	xTaskNotifyFromISR(__BUTTON_HANDLER__,(uint32_t)~0, eSetBits,NULL);//Send notify to vButtonTask;
+	xTaskNotifyFromISR(g_buttonHandler,(uint32_t)~0, eSetBits,NULL);//Send notify to vButtonTask;
 	EXTI->PR |= EXTI_PR_PIF0;//Clear Interrupt
 }

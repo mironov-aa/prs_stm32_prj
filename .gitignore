@@ -1,6 +1,6 @@
 .settings/
-.project/
-.cproject/
+.project
+.cproject
 Debug/
 Diploma_optimus Debug.launch
 .directory
