@@ -7,10 +7,15 @@
 #include "stm32f0xx.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "main.h"
 #include "PRMS_Interrupts.h"
 
 extern TaskHandle_t g_buttonHandler;
 extern uint16_t g_dataBuffer[8];
+
+#ifdef FREERTOS_DEBUG
+extern volatile uint32_t highFrequencyTimerTicks;
+#endif
 
 void EXTI0_1_IRQHandler(void)
 {
@@ -26,4 +31,15 @@ void SPI1_IRQHandler(void)
 		g_dataBuffer[i] = (uint16_t)SPI1->DR; /* receive data, clear flag */
 		i = ((i < 7)? (i + 1) : 0);
 	}
+}
+
+void TIM3_IRQHandler(void)
+{
+#ifdef FREERTOS_DEBUG
+	if (TIM3->SR & TIM_SR_UIF)
+	{
+		TIM3->SR &= ~TIM_SR_UIF;
+		highFrequencyTimerTicks++;
+	}
+#endif
 }

@@ -15,5 +15,5 @@ void vLedTask(void* argument);
 
 //Default FreeRTOS tasks
 void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char* pcTaskName);
-
+void vApplicationIdleHook();
 #endif /* INC_PRMS_TASKS_H_ */

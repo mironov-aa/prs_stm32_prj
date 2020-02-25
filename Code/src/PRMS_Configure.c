@@ -5,6 +5,7 @@
  *      Author: mironov-aa
  */
 #include "stm32f0xx.h"
+#include "main.h"
 #include "PRMS_Configure.h"
 
 extern uint8_t g_isHseStart;
@@ -21,7 +22,9 @@ void ConfigurePrms(void)
 	CongigureInterrupts();
 	ConfigureSpi1();
 	ConfigureSpi2();
-
+#ifdef FREERTOS_DEBUG
+	ConfigureTim3();
+#endif
 }
 
 static inline void ConfigureGpio(void)
@@ -128,5 +131,25 @@ static inline void ConfigureSpi2(void)
 	SPI2->CR1 |= SPI_CR1_SPE; /* (2) */
 
 }
+
+#ifdef FREERTOS_DEBUG
+static inline void ConfigureTim3(void)
+{
+	//Configure TIM3 for configGENERATE_RUN_TIME_STATS:FreeRTOSConfig.h
+	/* Enable the peripheral clock TIM3 */
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+	TIM3->CR1 |= TIM_CR1_URS;//only counter overflow generate update interrupt
+	TIM3->ARR = 480;// Update interrupt each 1/100kHZ.
+	TIM3->DIER |= TIM_DIER_UIE;//Update interrupt enable
+	TIM3->CR1 |= TIM_CR1_CEN;//Enable counter
+
+	/* Configure IT */
+	NVIC_SetPriority(TIM3_IRQn, 0);
+	NVIC_EnableIRQ(TIM3_IRQn);
+}
+#endif
+
+
+
 
 

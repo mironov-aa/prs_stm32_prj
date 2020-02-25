@@ -7,11 +7,16 @@
 #include "stm32f0xx.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "main.h"
 #include "PRMS_Tasks.h"
 
 extern TaskHandle_t g_buttonHandler;
 extern TaskHandle_t g_fpgaHandler;
 extern TaskHandle_t g_ledHandler;
+
+//Debug definition
+static TaskStatus_t debugArray[5] = {0};
+static uint32_t  totalRunTime = 0;//total run time since the target booted
 
 void vButtonTask(void* argument)
 {
@@ -76,5 +81,14 @@ void vLedTask(void* argument)
 void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char* pcTaskName)
 {
 	while(1);
+}
+
+void vApplicationIdleHook()
+{
+#ifdef FREERTOS_DEBUG
+	UBaseType_t arraySize = 0;
+	arraySize = uxTaskGetSystemState( debugArray, 5, &totalRunTime );
+	configASSERT(arraySize);
+#endif
 }
 
