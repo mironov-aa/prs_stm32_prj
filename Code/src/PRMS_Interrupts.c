@@ -14,7 +14,7 @@ extern TaskHandle_t g_buttonHandler;
 extern uint16_t g_dataBuffer[8];
 
 #ifdef FREERTOS_DEBUG
-extern volatile uint32_t highFrequencyTimerTicks;
+extern volatile uint32_t g_highFrequencyTimerTicks;
 #endif
 
 void EXTI0_1_IRQHandler(void)
@@ -39,7 +39,7 @@ void TIM3_IRQHandler(void)
 	if (TIM3->SR & TIM_SR_UIF)
 	{
 		TIM3->SR &= ~TIM_SR_UIF;
-		highFrequencyTimerTicks++;
+		g_highFrequencyTimerTicks++;
 	}
 #endif
 }

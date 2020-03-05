@@ -69,9 +69,9 @@ extern uint32_t SystemCoreClock;
 	#define configUSE_TRACE_FACILITY		1
 	#define configGENERATE_RUN_TIME_STATS	1
 
-	extern volatile uint32_t highFrequencyTimerTicks;
-	#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() ( highFrequencyTimerTicks = 0UL )
-	#define portGET_RUN_TIME_COUNTER_VALUE()	( highFrequencyTimerTicks )
+	extern volatile uint32_t g_highFrequencyTimerTicks;
+	#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() ( g_highFrequencyTimerTicks = 0UL )
+	#define portGET_RUN_TIME_COUNTER_VALUE()	( g_highFrequencyTimerTicks )
 	#define configCHECK_FOR_STACK_OVERFLOW	1
 
 #else

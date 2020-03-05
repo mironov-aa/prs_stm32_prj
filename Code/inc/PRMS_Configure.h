@@ -10,12 +10,8 @@
 
 
 void ConfigurePrms(void);
-static inline void ConfigureGpio(void);
-static inline void CongigureInterrupts(void); // Interrupts priority, NVIC & EXTI
-static inline void ConfigureSpi1(void);
-static inline void ConfigureSpi2(void);
 
-static inline void ConfigureTim3(void);
+
 
 
 

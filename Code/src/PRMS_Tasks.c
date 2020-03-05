@@ -5,6 +5,7 @@
  *      Author: mironov-aa
  */
 #include "stm32f0xx.h"
+#include "spi_driver.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -12,7 +13,7 @@
 
 extern TaskHandle_t g_buttonHandler;
 extern TaskHandle_t g_fpgaHandler;
-extern TaskHandle_t g_ledHandler;
+extern TaskHandle_t g_memoryHandler;
 
 //Debug definition
 static TaskStatus_t debugArray[5] = {0};
@@ -30,14 +31,14 @@ void vButtonTask(void* argument)
 			if((GPIOC->ODR & GPIO_ODR_6))
 			{
 				vTaskSuspend(g_fpgaHandler);
-				vTaskSuspend(g_ledHandler);
+				vTaskSuspend(g_memoryHandler);
 				GPIOC->BSRR |= GPIO_BSRR_BR_8;
 				GPIOC->BSRR |= GPIO_BSRR_BR_9;
 			}
 			else
 			{
 				vTaskResume(g_fpgaHandler);
-				vTaskResume(g_ledHandler);
+				vTaskResume(g_memoryHandler);
 			}
 			GPIOC->ODR ^= GPIO_ODR_6;
 		}
@@ -51,29 +52,19 @@ void vFpgaTask(void* argument)
 	vTaskSuspend(g_fpgaHandler);
 	while(1)
 	{
-		//TODO: Chip select = 0;
-		//TODO: 16byte!!!;
-		for(uint16_t i = 0; i < (uint16_t)8; i++)//Start transmission(16byte). In the interrupt handler place received data in the g_dataBuffer[8];
-		{
-			while(!(SPI1->SR & SPI_SR_TXE)){};//Wait till transmit buffer be empty
-			*(uint16_t*)&SPI2->DR = (uint16_t)i+1;//TODO: test bytes!!!
-			*(uint16_t*)&SPI1->DR = 0;//Send dummy bytes that clock slave.
-		}
-		//TODO: Chip select = 1;
-		//TODO: Notify to MemoryTask!
-		vTaskDelay(10*portTICK_PERIOD_MS);
-	}
-}
-
-void vLedTask(void* argument)
-{
-	g_ledHandler = xTaskGetCurrentTaskHandle();
-	vTaskSuspend(g_ledHandler);
-	while(1)
-	{
 		GPIOC->BSRR |= GPIO_BSRR_BS_9;
 		vTaskDelay(1000);
 		GPIOC->BSRR |= GPIO_BSRR_BR_9;
+		vTaskDelay(1000);
+	}
+}
+
+void vMemoryTask(void* argument)
+{
+	g_memoryHandler = xTaskGetCurrentTaskHandle();
+	vTaskSuspend(g_memoryHandler);
+	while(1)
+	{
 		vTaskDelay(1000);
 	}
 }

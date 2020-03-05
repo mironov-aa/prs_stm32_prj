@@ -10,7 +10,7 @@
 //PRMS tasks
 void vButtonTask(void* argument);
 void vFpgaTask(void* argument);
-void vLedTask(void* argument);
+void vMemoryTask(void* argument);
 
 
 //Default FreeRTOS tasks
