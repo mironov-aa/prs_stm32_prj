@@ -11,10 +11,15 @@
 
 static void SendCmd(CommandIndex command, CommandArgument argument, uint8_t crc);
 static inline ResponseR1 WaitForR1();
+static inline ResponseR2 WaitForR2();
+static inline ResponseR7 WaitForR7();//TODO:: !!!!
+static inline DataResponse WaitForDataResponse();
+static inline void WaitForStartDataToken();
 
 
 extern void g_Delay(uint32_t timeout);
 extern void g_ErrorHandler(uint8_t errorCode);
+extern volatile uint8_t g_dataBuffer[512];
 
 uint8_t SdhcCardInitialize()
 {
@@ -91,6 +96,57 @@ uint8_t SdhcCardInitialize()
 	SPI1_CsHigh();
 }
 
+void SdhcCardReadBlock(uint8_t* buffer_out, uint32_t block_index)
+{
+	CommandArgument argument;
+	argument.value = block_index;
+
+	SPI1_CsLow();
+	SendCmd(CMD17,argument,0x1);
+	WaitForR1();
+	WaitForStartDataToken();
+	for(uint32_t i = 0; i < 512; i++)
+	{
+		g_dataBuffer[i] = SPI1_TransmitReceive(0xFF);
+	}
+	SPI1_TransmitReceive(0xFF);//two bytes
+	SPI1_TransmitReceive(0xFF);//crc 16
+	SPI1_CsHigh();
+}
+
+void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index)
+{
+	CommandArgument argument;
+	DataResponse dataResponse;
+	ResponseR2 responseR2;
+	const uint32_t busyTimeout = 10;
+	uint32_t busyTimeoutCounter = 0;
+
+	argument.value = block_index;
+
+	SPI1_CsLow();
+	SendCmd(CMD24,argument,0x1);
+	WaitForR1();
+
+	SPI1_TransmitReceive(START_BLOCK_TOKEN);
+	for(uint32_t i = 0; i < 512; i++)
+	{
+		SPI1_TransmitReceive(g_dataBuffer[i]);//TODO:: Need DMA!
+	}
+	dataResponse = WaitForDataResponse();
+	while(SPI1_TransmitReceive(0xFF) != 0xFF);
+	if(dataResponse.Field.status != 0b010)// status != ok
+	{
+
+		argument.value = 0;
+		SendCmd(CMD13, argument, 0x1);
+		responseR2 = WaitForR2();
+		g_ErrorHandler(5);
+	}
+	SPI1_CsHigh();
+}
+
+
 static void SendCmd(CommandIndex command, CommandArgument argument, uint8_t crc)
 {
 	SPI1_TransmitReceive(command);
@@ -118,4 +174,60 @@ static inline ResponseR1 WaitForR1()
 	}
 
 	return responseR1;
+}
+
+static inline ResponseR2 WaitForR2()
+{
+	const uint32_t maxRetries = 25;
+	ResponseR2 responseR2;
+	uint32_t retriesCounter = 0;
+	do
+	{
+		responseR2.bytes[1] = SPI1_TransmitReceive(0xFF);
+		retriesCounter++;
+	}while((responseR2.Field.alwaysZero) && (retriesCounter < maxRetries));//wait for R1 response
+	responseR2.bytes[0] = SPI1_TransmitReceive(0xFF);
+	if(retriesCounter == maxRetries)
+	{
+		g_ErrorHandler(5);//Infinity loop if error occurred
+	}
+	return responseR2;
+}
+
+static inline DataResponse WaitForDataResponse()
+{
+	const uint32_t maxRetries = 25;
+	DataResponse dataResponse;
+	uint32_t retriesCounter = 0;
+	do
+	{
+		dataResponse.value = SPI1_TransmitReceive(0xFF);
+		retriesCounter++;
+	}while((dataResponse.Field.allwaysZero) && (retriesCounter < maxRetries));//wait for R1 response
+
+	if(retriesCounter == maxRetries)
+	{
+		g_ErrorHandler(5);//Infinity loop if error occurred
+	}
+
+	return dataResponse;
+}
+
+
+
+static inline void WaitForStartDataToken()
+{
+	const uint32_t maxRetries = 30;
+	uint32_t retriesCounter = 0;
+	uint8_t received_data = 0;
+	do
+	{
+		received_data = SPI1_TransmitReceive(0xFF);
+		retriesCounter++;
+	}while((received_data != START_BLOCK_TOKEN) && (retriesCounter < maxRetries));//wait for R1 response
+
+	if(retriesCounter == maxRetries)
+	{
+		g_ErrorHandler(5);//Infinity loop if error occurred
+	}
 }

@@ -14,7 +14,7 @@ TaskHandle_t g_buttonHandler = NULL;
 TaskHandle_t g_fpgaHandler = NULL;
 TaskHandle_t g_memoryHandler = NULL;
 
-volatile uint16_t g_dataBuffer[8] = {0};
+uint8_t g_dataBuffer[512] = {0};
 
 #ifdef FREERTOS_DEBUG
 volatile uint32_t g_highFrequencyTimerTicks = 0;

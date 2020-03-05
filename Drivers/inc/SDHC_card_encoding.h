@@ -59,7 +59,7 @@ typedef enum
 
 typedef enum
 {
-	StartBlockToken = 0xFE,
+	START_BLOCK_TOKEN = 0xFE,
 }Tokens;
 
 typedef union
@@ -86,16 +86,27 @@ typedef union
 
 typedef union
 {
-	uint8_t bytes[5];
+	uint8_t bytes[2];
 	struct
 	{
-		uint8_t checkPattern;
-		uint8_t voltageAccepted : 4;
-		uint16_t reserve : 16;
-		uint8_t commandVersion : 4;
-		ResponseR1 R1;
+		uint8_t lockedCard : 1;
+		uint8_t writeProtect : 1;
+		uint8_t error : 1;
+		uint8_t ccError : 1;
+		uint8_t cardEccFailed : 1;
+		uint8_t writeProtectViolation : 1;
+		uint8_t eraseParam : 1;
+		uint8_t outOfRange : 1;
+		uint8_t inIdleState : 1;
+		uint8_t eraseReset : 1;
+		uint8_t illegalCommand : 1;
+		uint8_t crcError : 1;
+		uint8_t eraseSequenceError : 1;
+		uint8_t addressError : 1;
+		uint8_t parameterError : 1;
+		uint8_t alwaysZero : 1;
 	}Field;
-}ResponseR7;
+}ResponseR2;
 
 typedef union
 {
@@ -122,6 +133,30 @@ typedef union
 }ResponseR3;
 
 
+typedef union
+{
+	uint8_t bytes[5];
+	struct
+	{
+		uint8_t checkPattern;
+		uint8_t voltageAccepted : 4;
+		uint16_t reserve : 16;
+		uint8_t commandVersion : 4;
+		ResponseR1 R1;
+	}Field;
+}ResponseR7;
+
+typedef union
+{
+	uint8_t value;
+	struct
+	{
+		uint8_t allwaysOne : 1;
+		uint8_t status : 3;
+		uint8_t allwaysZero : 1;
+		uint8_t reserve : 3;
+	}Field;
+}DataResponse;
 
 
 #endif /* INC_SDHC_CARD_ENCODING_H_ */

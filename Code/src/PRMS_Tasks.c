@@ -14,6 +14,8 @@
 extern TaskHandle_t g_buttonHandler;
 extern TaskHandle_t g_fpgaHandler;
 extern TaskHandle_t g_memoryHandler;
+extern uint8_t g_dataBuffer[512];
+extern void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index);
 
 //Debug definition
 static TaskStatus_t debugArray[5] = {0};

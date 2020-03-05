@@ -9,6 +9,9 @@ extern void vFpgaTask(void* argument);
 extern void vMemoryTask(void* argument);
 
 extern uint8_t SdhcCardInitialize();
+extern uint8_t g_dataBuffer[512];
+extern void SdhcCardReadBlock(uint8_t* buffer_out, uint32_t block_index);
+extern void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index);
 
 int main(void)
 {
@@ -17,7 +20,6 @@ int main(void)
 	xTaskCreate(vFpgaTask, "FPGA", 128, NULL, 1, NULL);
 	xTaskCreate(vMemoryTask, "MEM", 128, NULL, 1, NULL);
 	vTaskStartScheduler();
-
 	for(;;);
 }
 
