@@ -4,7 +4,7 @@
  *  Created on: Feb 24, 2020
  *      Author: mironov-aa
  */
-
+#include "ff.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -15,6 +15,8 @@ TaskHandle_t g_fpgaHandler = NULL;
 TaskHandle_t g_memoryHandler = NULL;
 
 uint8_t g_dataBuffer[512] = {0};
+FATFS g_fatFs;
+FIL g_file;
 
 #ifdef FREERTOS_DEBUG
 volatile uint32_t g_highFrequencyTimerTicks = 0;
@@ -29,5 +31,7 @@ void g_Delay(uint32_t timeout)
 
 void g_ErrorHandler(uint8_t errorCode)
 {
-	while(1);
+
+	taskDISABLE_INTERRUPTS();
+	for( ;; );
 }

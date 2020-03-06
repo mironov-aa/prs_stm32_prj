@@ -23,7 +23,7 @@ extern volatile uint8_t g_dataBuffer[512];
 
 uint8_t SdhcCardInitialize()
 {
-	const uint32_t maxRetries = 25;
+	const uint32_t maxRetries = 100;
 	uint32_t retriesCounter = 0;
 	ResponseR1 responseR1;
 	ResponseR3 responseR3;
@@ -32,12 +32,13 @@ uint8_t SdhcCardInitialize()
 	argument.value = 0;
 
 	// 1. Power on
-	g_Delay(48000); //~1ms
+	g_Delay(480000); // > 10ms
 	SPI1_CsHigh();// CS high sd card for power up sequence
-	for(uint8_t i = 0; i < 10; i++)
+	for(uint8_t i = 0; i < 23; i++)
 	{
-		SPI1_TransmitReceive(0xFF); // MISO high ~80 clocks
+		SPI1_TransmitReceive(0xFF); // MISO high >80 clocks
 	}
+	g_Delay(480000); // > 10ms
 	// 2. Software reset
 	SPI1_CsLow();
 
@@ -60,7 +61,7 @@ uint8_t SdhcCardInitialize()
 
 	if((responseR7.Field.voltageAccepted != 0x1) || responseR7.Field.checkPattern != 0xAA)
 	{
-		g_ErrorHandler(5);
+		g_ErrorHandler(6);
 	}
 
 	//4. Initialize card
@@ -77,7 +78,7 @@ uint8_t SdhcCardInitialize()
 	}while((responseR1.Field.inIdleState) && (retriesCounter < maxRetries));//Sending ACMD41 until card be ready
 	if(retriesCounter == maxRetries)
 	{
-		g_ErrorHandler(5);
+		g_ErrorHandler(7);
 	}
 
 	//5. Read OCR
@@ -91,7 +92,7 @@ uint8_t SdhcCardInitialize()
 
 	if(responseR3.Field.cardCapacityStatus != 1) //if SD SC(Standard Capacity)
 	{
-		g_ErrorHandler(5);
+		g_ErrorHandler(8);
 	}
 	SPI1_CsHigh();
 }
@@ -107,7 +108,7 @@ void SdhcCardReadBlock(uint8_t* buffer_out, uint32_t block_index)
 	WaitForStartDataToken();
 	for(uint32_t i = 0; i < 512; i++)
 	{
-		g_dataBuffer[i] = SPI1_TransmitReceive(0xFF);
+		buffer_out[i] = SPI1_TransmitReceive(0xFF);
 	}
 	SPI1_TransmitReceive(0xFF);//two bytes
 	SPI1_TransmitReceive(0xFF);//crc 16
@@ -131,17 +132,22 @@ void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index)
 	SPI1_TransmitReceive(START_BLOCK_TOKEN);
 	for(uint32_t i = 0; i < 512; i++)
 	{
-		SPI1_TransmitReceive(g_dataBuffer[i]);//TODO:: Need DMA!
+		SPI1_TransmitReceive(buffer_in[i]);//TODO:: Need DMA!
 	}
 	dataResponse = WaitForDataResponse();
 	while(SPI1_TransmitReceive(0xFF) != 0xFF);
+
+	argument.value = 0;
+	SendCmd(CMD13, argument, 0x1);
+	responseR2 = WaitForR2();
+
 	if(dataResponse.Field.status != 0b010)// status != ok
 	{
 
 		argument.value = 0;
 		SendCmd(CMD13, argument, 0x1);
 		responseR2 = WaitForR2();
-		g_ErrorHandler(5);
+		g_ErrorHandler(9);
 	}
 	SPI1_CsHigh();
 }
@@ -159,7 +165,7 @@ static void SendCmd(CommandIndex command, CommandArgument argument, uint8_t crc)
 
 static inline ResponseR1 WaitForR1()
 {
-	const uint32_t maxRetries = 25;
+	const uint32_t maxRetries = 50;
 	ResponseR1 responseR1;
 	uint32_t retriesCounter = 0;
 	do
@@ -170,7 +176,7 @@ static inline ResponseR1 WaitForR1()
 
 	if(retriesCounter == maxRetries)
 	{
-		g_ErrorHandler(5);//Infinity loop if error occurred
+		g_ErrorHandler(1);//Infinity loop if error occurred
 	}
 
 	return responseR1;
@@ -178,7 +184,7 @@ static inline ResponseR1 WaitForR1()
 
 static inline ResponseR2 WaitForR2()
 {
-	const uint32_t maxRetries = 25;
+	const uint32_t maxRetries = 50;
 	ResponseR2 responseR2;
 	uint32_t retriesCounter = 0;
 	do
@@ -189,14 +195,14 @@ static inline ResponseR2 WaitForR2()
 	responseR2.bytes[0] = SPI1_TransmitReceive(0xFF);
 	if(retriesCounter == maxRetries)
 	{
-		g_ErrorHandler(5);//Infinity loop if error occurred
+		g_ErrorHandler(2);//Infinity loop if error occurred
 	}
 	return responseR2;
 }
 
 static inline DataResponse WaitForDataResponse()
 {
-	const uint32_t maxRetries = 25;
+	const uint32_t maxRetries = 50;
 	DataResponse dataResponse;
 	uint32_t retriesCounter = 0;
 	do
@@ -207,7 +213,7 @@ static inline DataResponse WaitForDataResponse()
 
 	if(retriesCounter == maxRetries)
 	{
-		g_ErrorHandler(5);//Infinity loop if error occurred
+		g_ErrorHandler(3);//Infinity loop if error occurred
 	}
 
 	return dataResponse;
@@ -217,7 +223,7 @@ static inline DataResponse WaitForDataResponse()
 
 static inline void WaitForStartDataToken()
 {
-	const uint32_t maxRetries = 30;
+	const uint32_t maxRetries = 0xFFFF;
 	uint32_t retriesCounter = 0;
 	uint8_t received_data = 0;
 	do
@@ -228,6 +234,6 @@ static inline void WaitForStartDataToken()
 
 	if(retriesCounter == maxRetries)
 	{
-		g_ErrorHandler(5);//Infinity loop if error occurred
+		g_ErrorHandler(4);//Infinity loop if error occurred
 	}
 }
