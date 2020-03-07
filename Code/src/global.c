@@ -10,9 +10,6 @@
 #include "main.h"
 
 uint8_t g_isHseStart = 0; //< Set if HSE don't start after system_stm32f0xx.c::SetSysClock();
-TaskHandle_t g_buttonHandler = NULL;
-TaskHandle_t g_fpgaHandler = NULL;
-TaskHandle_t g_memoryHandler = NULL;
 
 uint8_t g_dataBuffer[512] = {0};
 FATFS g_fatFs;

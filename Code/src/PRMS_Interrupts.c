@@ -10,7 +10,7 @@
 #include "main.h"
 #include "PRMS_Interrupts.h"
 
-extern TaskHandle_t g_buttonHandler;
+extern TaskHandle_t xButtonHandler;
 
 #ifdef FREERTOS_DEBUG
 extern volatile uint32_t g_highFrequencyTimerTicks;
@@ -18,12 +18,13 @@ extern volatile uint32_t g_highFrequencyTimerTicks;
 
 void EXTI0_1_IRQHandler(void)
 {
-	xTaskNotifyFromISR(g_buttonHandler,(uint32_t)~0, eSetBits,NULL);//Send notify to vButtonTask;
+	xTaskNotifyFromISR(xButtonHandler,(uint32_t)~0, eSetBits,NULL);//Send notify to vButtonTask;
 	EXTI->PR |= EXTI_PR_PIF0;//Clear Interrupt
 }
 
 void SPI1_IRQHandler(void)
 {
+
 }
 
 void TIM3_IRQHandler(void)

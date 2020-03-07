@@ -17,6 +17,7 @@
 // PB4(MISO)
 // PB5(MOSI)
 uint8_t SPI1_TransmitReceive(uint8_t dataIn);
+void SPI1_OnlyTransmitBlockDMA(uint8_t* bufferIn);
 
 static inline void SPI1_CsLow()
 {

@@ -14,6 +14,7 @@
 static inline void ConfigureGpio(void);
 static inline void CongigureInterrupts(void); // Interrupts priority, NVIC & EXTI
 static inline void ConfigureSpi1(bool isInitial);
+static inline void ConfigureSpi1Dma();
 static inline void ConfigureSpi2(void);
 static inline void ConfigureTim3(void);
 
@@ -34,8 +35,9 @@ void ConfigurePrms(void)
 	ConfigureSpi1(true);
 	SdhcCardInitialize();
 	ConfigureSpi1(false);
-
 	ConfigureSpi2();
+
+	ConfigureSpi1Dma();
 
 #ifdef FREERTOS_DEBUG
 	ConfigureTim3();
@@ -107,10 +109,6 @@ static inline void ConfigureGpio(void)
 
 static inline void CongigureInterrupts(void)
 {
-	//Configure NVIC for push button on PA0
-	NVIC_EnableIRQ(EXTI0_1_IRQn);
-	NVIC_SetPriority(EXTI0_1_IRQn, 0);
-
 	//PA0 as source input
 	SYSCFG->EXTICR[0] &= ~SYSCFG_EXTICR1_EXTI0;
 	SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI0_PA;
@@ -118,6 +116,11 @@ static inline void CongigureInterrupts(void)
 	//Set up EXTI
 	EXTI->RTSR |= EXTI_RTSR_RT0; //Rising Edge for line 0
 	EXTI->IMR |= EXTI_IMR_IM0; //Interrupt mask for line 0
+
+	//Configure NVIC for push button on PA0
+	NVIC_SetPriority(EXTI0_1_IRQn, 0);
+	NVIC_EnableIRQ(EXTI0_1_IRQn);
+
 }
 
 static inline void ConfigureSpi1(bool isInitial)
@@ -137,14 +140,29 @@ static inline void ConfigureSpi1(bool isInitial)
 	/* Configure SPI1 in master */
 	/* (1) Master selection, CPOL and CPHA at 1 , software slave management & Internal slave select */
 	/* (2) BR: if need SDHC initialize: Fpclk/256, otherwise Fpclk/4
-	/* (3) Slave select output enabled, RXNE IT, 8-bit Rx fifo */
+	/* (3) Slave select output enabled, RXNE IT, 8-bit Rx fifo TX RX buffers DMA enable*/
 	/* (4) Enable SPI1 */
 	SPI1->CR1 = SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPHA | SPI_CR1_CPOL; /* (1) */
 	SPI1->CR1 &= ~SPI_CR1_BR; /* (2) */
 	SPI1->CR1 |= (isInitial)? (SPI_CR1_BR) : (SPI_CR1_BR_0);
-	SPI1->CR2 = SPI_CR2_FRXTH | SPI_CR2_SSOE | SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2; /* (3) */
+	SPI1->CR2 = SPI_CR2_FRXTH | SPI_CR2_SSOE | SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2 | SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN
+										| SPI_CR2_TXEIE | SPI_CR2_RXNEIE; /* (3) */
 	SPI1->CR1 |= SPI_CR1_SPE; /* (4) */
 }
+
+static inline void ConfigureSpi1Dma()
+{
+	 // Enable the peripheral clock DMA1
+	 RCC->AHBENR |= RCC_AHBENR_DMA1EN;
+
+	  /* DMA1 Channel2 SPI1_RX config */
+	  //Read from peripheral, Peripheral, Memory size 1byte,
+	  DMA1_Channel2->CPAR = (uint32_t)&(SPI1->DR);//Peripheral address
+	  /* DMA1 Channel3 SPI1_TX config */
+	  DMA1_Channel3->CPAR = (uint32_t)&(SPI1->DR); //Peripheral address
+}
+
+
 
 static inline void ConfigureSpi2(void)
 {

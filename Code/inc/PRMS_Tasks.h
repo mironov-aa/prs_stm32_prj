@@ -14,6 +14,9 @@ void vMemoryTask(void* argument);
 
 
 //Default FreeRTOS tasks
+void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
+									StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize);
+
 void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char* pcTaskName);
 void vApplicationIdleHook();
 #endif /* INC_PRMS_TASKS_H_ */

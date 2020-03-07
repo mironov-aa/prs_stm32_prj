@@ -130,16 +130,15 @@ void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index)
 	WaitForR1();
 
 	SPI1_TransmitReceive(START_BLOCK_TOKEN);
+	SPI1_OnlyTransmitBlockDMA(buffer_in);
+	/*
 	for(uint32_t i = 0; i < 512; i++)
 	{
 		SPI1_TransmitReceive(buffer_in[i]);//TODO:: Need DMA!
-	}
+	}*/
+
 	dataResponse = WaitForDataResponse();
 	while(SPI1_TransmitReceive(0xFF) != 0xFF);
-
-	argument.value = 0;
-	SendCmd(CMD13, argument, 0x1);
-	responseR2 = WaitForR2();
 
 	if(dataResponse.Field.status != 0b010)// status != ok
 	{
