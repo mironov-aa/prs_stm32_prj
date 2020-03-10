@@ -11,7 +11,9 @@
 
 uint8_t g_isHseStart = 0; //< Set if HSE don't start after system_stm32f0xx.c::SetSysClock();
 
-uint8_t g_dataBuffer[512] = {0};
+uint8_t g_dataBuffer1[2048];
+uint8_t g_dataBuffer2[2048];
+
 FATFS g_fatFs;
 FIL g_file;
 
@@ -23,7 +25,7 @@ volatile uint32_t g_highFrequencyTimerTicks = 0;
 
 void g_Delay(uint32_t timeout)
 {
-	for(uint32_t i = 0; i < timeout; i++){}
+	for(volatile uint32_t i = 0; i < timeout; i++){}
 }
 
 void g_ErrorHandler(uint8_t errorCode)

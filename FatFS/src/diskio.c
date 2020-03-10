@@ -53,6 +53,10 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
+
+
+
+
 	for(uint32_t i = 0; i < count; i++)
 	{
 		SdhcCardReadBlock(buff, sector + i);
@@ -76,9 +80,11 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
+	uint8_t* buffPointer = (uint8_t*)buff;
 	for(uint32_t i = 0; i < count; i++)
 	{
-		SdhcCardWriteBlock((uint8_t*)buff, sector + i);
+		SdhcCardWriteBlock(buffPointer, sector + i);
+		buffPointer += 512;
 	}
 
 	return RES_OK;

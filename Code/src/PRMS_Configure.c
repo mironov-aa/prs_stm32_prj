@@ -131,6 +131,7 @@ static inline void ConfigureSpi1(bool isInitial)
 	/* Correct disable SPI1*/
 	while((SPI1->SR & SPI_SR_FTLVL) != 0){} //no more data to transmit
 	while((SPI1->SR & SPI_SR_BSY) != 0){} //the last data frame is processed
+	__asm volatile( "dmb" ::: "memory" );
 	SPI1->CR1 = 0; //disable SPI
 	while((SPI1->SR & SPI_SR_FRLVL) != 0)
 	{
@@ -147,6 +148,7 @@ static inline void ConfigureSpi1(bool isInitial)
 	SPI1->CR1 |= (isInitial)? (SPI_CR1_BR) : (SPI_CR1_BR_0);
 	SPI1->CR2 = SPI_CR2_FRXTH | SPI_CR2_SSOE | SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2 | SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN
 										| SPI_CR2_TXEIE | SPI_CR2_RXNEIE; /* (3) */
+	__asm volatile( "dmb" ::: "memory" );
 	SPI1->CR1 |= SPI_CR1_SPE; /* (4) */
 }
 
@@ -175,6 +177,7 @@ static inline void ConfigureSpi2(void)
 	/* (2) Enable SPI2 */
 	SPI2->CR1 = SPI_CR1_CPHA | SPI_CR1_CPOL;
 	SPI2->CR2 = SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2 | SPI_CR2_FRXTH; /* (1) */
+	__asm volatile( "dmb" ::: "memory" );
 	SPI2->CR1 |= SPI_CR1_SPE; /* (2) */
 
 }

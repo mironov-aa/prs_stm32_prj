@@ -15,7 +15,7 @@ extern TaskHandle_t xButtonHandler;
 extern TaskHandle_t xMemoryHandler;
 extern TaskHandle_t xFpgaHandler;
 
-extern uint8_t g_dataBuffer[512];
+extern uint8_t g_dataBuffer1[512];
 extern void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index);
 extern void SdhcCardReadBlock(uint8_t* buffer_out, uint32_t block_index);
 extern void g_Delay(uint32_t timeout);
@@ -25,7 +25,7 @@ extern FIL g_file;
 //Debug definition
 static TaskStatus_t debugArray[5] = {0};
 static uint32_t  totalRunTime = 0;//total run time since the target booted
-static FRESULT fResult;
+volatile static FRESULT fResult;
 
 void vButtonTask(void* argument)
 {
@@ -68,29 +68,31 @@ void vFpgaTask(void* argument)
 			i = 0;
 			xTaskNotify(xMemoryHandler,~(0), eSetBits);
 		}
-		vTaskDelay(10*portTICK_PERIOD_MS);
+		vTaskDelay(2*portTICK_PERIOD_MS);
 	}
 }
 
 void vMemoryTask(void* argument)
 {
 	unsigned int savedBytes = 0;
-	uint32_t errorsCounter = 0;
-	uint64_t counter = 0;
+	volatile uint32_t errorsCounter = 0;
+	volatile uint64_t counter = 0;
 	uint32_t flag = 0;
 	uint32_t maxValue = 0;
 	vTaskSuspend(xMemoryHandler);
 	while(1)
 	{
 		flag = ulTaskNotifyTake((uint32_t)~0, portMAX_DELAY);
-		TickType_t t1 = xTaskGetTickCount();
-		fResult = f_write(&g_file, g_dataBuffer, 512, &savedBytes);
-		TickType_t t2 = xTaskGetTickCount();
+		volatile TickType_t t1 = xTaskGetTickCount();
+		__asm volatile( "dmb" ::: "memory" );
+		fResult = f_write(&g_file, g_dataBuffer1, 512, &savedBytes);
+		__asm volatile( "dmb" ::: "memory" );
+		volatile TickType_t t2 = xTaskGetTickCount();
 		t2-=t1;
 		counter++;
-		if(t2 > 9)
+		if(t2 > 2)
 		{
-			maxValue = (t2 > maxValue)? t2 : maxValue;
+			maxValue = (t2  > maxValue)? t2 : maxValue;
 			errorsCounter++;
 		}
 
