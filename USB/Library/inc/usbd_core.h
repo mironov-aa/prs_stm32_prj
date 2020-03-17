@@ -48,6 +48,8 @@ void USBD_Init(USB_CORE_HANDLE *pdev,
                USBD_Class_cb_TypeDef *class_cb, 
                USBD_Usr_cb_TypeDef *usr_cb);
 
+
+
 USBD_Status USBD_DeInit(USB_CORE_HANDLE *pdev);
 
 USBD_Status USBD_ClrCfg(USB_CORE_HANDLE  *pdev, uint8_t cfgidx);

@@ -4,9 +4,7 @@
 #include "task.h"
 #include "main.h"
 
-#include  "usbd_msc_core.h"
-#include  "usbd_usr.h"
-USB_CORE_HANDLE  USB_Device_dev ;
+
 
 //PRMS tasks
 StaticTask_t xButtonBuffer;
@@ -25,22 +23,22 @@ TaskHandle_t xFpgaHandler = NULL;
 extern void vFpgaTask(void* argument);
 
 extern void ConfigurePrms(void);
-extern FATFS g_fatFs;
-
 volatile static FRESULT fResult;
+
+extern uint8_t g_dataStartPattern[512];
 
 int main(void)
 {
+	for(register uint32_t i = 0; i < 1000000; i++);
+	for(uint32_t i = 0; i < 512; i=i+4)
+	{
+		g_dataStartPattern[i] = 0xFF;
+		g_dataStartPattern[i+1] = 0x00;
+		g_dataStartPattern[i+2] = 0xAA;
+		g_dataStartPattern[i+3] = 0xBB;
+	}
+
 	ConfigurePrms();
-
-	  USBD_Init(&USB_Device_dev,
-	            &USR_desc,
-	            &USBD_MSC_cb,
-	            &USR_cb);
-
-	while(1);
-	fResult = f_mount(&g_fatFs, "", 1);
-
 	xButtonHandler = xTaskCreateStatic(vButtonTask, "BUTTON", 1024, NULL, 4, xButtonStack, &xButtonBuffer);
 	xMemoryHandler = xTaskCreateStatic(vMemoryTask, "MEM", 1024, NULL, 2, xMemoryStack, &xMemoryBuffer);
 	xFpgaHandler = xTaskCreateStatic(vFpgaTask, "FPGA", 1024, NULL, 3, xFpgaStack, &xFpgaBuffer);

@@ -6,13 +6,15 @@
  */
 #include "ff.h"
 #include "FreeRTOS.h"
+#include "stm32f072xb.h"
 #include "task.h"
 #include "main.h"
 
 uint8_t g_isHseStart = 0; //< Set if HSE don't start after system_stm32f0xx.c::SetSysClock();
 
-uint8_t g_dataBuffer1[2048];
-uint8_t g_dataBuffer2[2048];
+uint8_t g_dataBuffer1[512];
+uint8_t g_dataBuffer2[512];
+uint8_t g_dataStartPattern[512];
 
 FATFS g_fatFs;
 FIL g_file;
@@ -32,5 +34,10 @@ void g_ErrorHandler(uint8_t errorCode)
 {
 
 	taskDISABLE_INTERRUPTS();
-	for( ;; );
+	for( ;; )
+	{
+		g_Delay(4800000);
+		GPIOC->ODR ^= GPIO_ODR_7;
+		g_Delay(4800000);
+	}
 }

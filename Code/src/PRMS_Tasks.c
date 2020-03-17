@@ -16,10 +16,18 @@ extern TaskHandle_t xMemoryHandler;
 extern TaskHandle_t xFpgaHandler;
 
 extern uint8_t g_dataBuffer1[512];
+extern uint8_t g_dataStartPattern[512];
+
 extern void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index);
 extern void SdhcCardReadBlock(uint8_t* buffer_out, uint32_t block_index);
 extern void g_Delay(uint32_t timeout);
+
 extern FIL g_file;
+extern FATFS g_fatFs;
+
+#include  "usbd_msc_core.h"
+#include  "usbd_usr.h"
+USB_CORE_HANDLE  USB_Device_dev;
 
 
 //Debug definition
@@ -29,28 +37,47 @@ volatile static FRESULT fResult;
 
 void vButtonTask(void* argument)
 {
-	uint32_t interruptFlag;
+	volatile uint32_t interruptFlag;
+	unsigned int savedBytes = 0;
+	USBD_Init(&USB_Device_dev,&USR_desc, &USBD_MSC_cb, &USR_cb);
 	while(1)
 	{
 		interruptFlag = ulTaskNotifyTake((uint32_t)~0, portMAX_DELAY);
+		__asm volatile( "dmb" ::: "memory" );
+		portENTER_CRITICAL();
+		__asm volatile( "dmb" ::: "memory" );
 		if(interruptFlag == ((uint32_t)~0))
 		{
 			if((GPIOC->ODR & GPIO_ODR_6))
 			{
 				vTaskSuspend(xMemoryHandler);
 				vTaskSuspend(xFpgaHandler);
-				GPIOC->BSRR |= GPIO_BSRR_BR_8;
-				GPIOC->BSRR |= GPIO_BSRR_BR_9;
+				__asm volatile( "dmb" ::: "memory" );
+				fResult = f_sync(&g_file);
+				__asm volatile( "dmb" ::: "memory" );
 				fResult = f_close(&g_file);
+				__asm volatile( "dmb" ::: "memory" );
+				fResult = f_unmount("");
+				__asm volatile( "dmb" ::: "memory" );
+				DCD_DevConnect(&USB_Device_dev);
 			}
 			else
 			{
+				DCD_DevDisconnect(&USB_Device_dev);
+				__asm volatile( "dmb" ::: "memory" );
 				vTaskResume(xMemoryHandler);
 				vTaskResume(xFpgaHandler);
+				__asm volatile( "dmb" ::: "memory" );
+				fResult = f_mount(&g_fatFs, "", 1);
+				__asm volatile( "dmb" ::: "memory" );
 				fResult = f_open(&g_file, "test.bin", FA_OPEN_APPEND | FA_WRITE);
+				__asm volatile( "dmb" ::: "memory" );
+				fResult = f_write(&g_file, g_dataStartPattern, 512, &savedBytes);
 			}
 			GPIOC->ODR ^= GPIO_ODR_6;
 		}
+		__asm volatile( "dmb" ::: "memory" );
+		portEXIT_CRITICAL();
 	}
 }
 

@@ -32,18 +32,21 @@ uint8_t SdhcCardInitialize()
 	argument.value = 0;
 
 	// 1. Power on
-	g_Delay(480000); // > 10ms
-	SPI1_CsHigh();// CS high sd card for power up sequence
-	for(uint8_t i = 0; i < 23; i++)
+	for(int i = 0; i < 3; i++)
 	{
-		SPI1_TransmitReceive(0xFF); // MISO high >80 clocks
-	}
-	g_Delay(480000); // > 10ms
-	// 2. Software reset
-	SPI1_CsLow();
+		g_Delay(480000); // > 10ms
+		SPI1_CsHigh();// CS high sd card for power up sequence
+		for(uint8_t i = 0; i < 23; i++)
+		{
+			SPI1_TransmitReceive(0xFF); // MISO high >80 clocks
+		}
+		g_Delay(480000); // > 10ms
+		// 2. Software reset
+		SPI1_CsLow();
 
-	SendCmd(CMD0, argument, 0x95);//go idle state
-	WaitForR1();
+		SendCmd(CMD0, argument, 0x95);//go idle state
+		WaitForR1();
+	}
 
 	// 3. SDHC v.2 checkout
 	argument.value = 0x0000001AA;//checkPattern = 0xAA

@@ -27,10 +27,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_msc_mem.h"
+#include "SDHC_card_driver.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define STORAGE_LUN_NBR                  1 
+#define STORAGE_LUN_NBR                  1
+#define STORAGE_BLK_NUMBER 0x700000
+#define STORAGE_BLK_SIZE 0x200
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -101,9 +104,7 @@ USBD_STORAGE_cb_TypeDef  *USBD_STORAGE_fops = &USBD_MICRO_SDIO_fops;
 
 int8_t STORAGE_Init (uint8_t lun)
 {
-
   return (0);
-  
 }
 
 /**
@@ -115,7 +116,8 @@ int8_t STORAGE_Init (uint8_t lun)
   */
 int8_t STORAGE_GetCapacity (uint8_t lun, uint32_t *block_num, uint32_t *block_size)
 { 
-
+  *block_num = STORAGE_BLK_NUMBER;
+  *block_size = STORAGE_BLK_SIZE;
   return (0);
   
 }
@@ -127,7 +129,6 @@ int8_t STORAGE_GetCapacity (uint8_t lun, uint32_t *block_num, uint32_t *block_si
   */
 int8_t  STORAGE_IsReady (uint8_t lun)
 {
-
   return (0);
 }
 
@@ -154,8 +155,12 @@ int8_t STORAGE_Read (uint8_t lun,
                  uint32_t blk_addr,                       
                  uint16_t blk_len)
 {
-  
 
+  for(uint32_t i = 0; i < blk_len; i++)
+  {
+	  SdhcCardReadBlock(buf, blk_addr+i);
+	  buf+=512;
+  }
   return 0;
 }
 /**
@@ -171,8 +176,11 @@ int8_t STORAGE_Write (uint8_t lun,
                   uint32_t blk_addr,
                   uint16_t blk_len)
 {
-  
-
+  for(uint32_t i = 0; i < blk_len; i++)
+  {
+	SdhcCardWriteBlock(buf, blk_addr+i);
+	buf+=512;
+  }
   return (0);
 }
 
