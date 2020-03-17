@@ -4,7 +4,9 @@
 #include "task.h"
 #include "main.h"
 
-
+#include  "usbd_msc_core.h"
+#include  "usbd_usr.h"
+USB_CORE_HANDLE  USB_Device_dev ;
 
 //PRMS tasks
 StaticTask_t xButtonBuffer;
@@ -30,6 +32,13 @@ volatile static FRESULT fResult;
 int main(void)
 {
 	ConfigurePrms();
+
+	  USBD_Init(&USB_Device_dev,
+	            &USR_desc,
+	            &USBD_MSC_cb,
+	            &USR_cb);
+
+	while(1);
 	fResult = f_mount(&g_fatFs, "", 1);
 
 	xButtonHandler = xTaskCreateStatic(vButtonTask, "BUTTON", 1024, NULL, 4, xButtonStack, &xButtonBuffer);

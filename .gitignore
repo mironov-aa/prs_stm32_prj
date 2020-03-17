@@ -2,5 +2,5 @@
 .project
 .cproject
 Debug/
-Diploma_optimus Debug.launch
+*.launch
 .directory
