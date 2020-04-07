@@ -11,13 +11,15 @@
 #include <stdint.h>
 #include "stm32f072xb.h"
 
-//SPI1: SD_CARD
+/*__________________SPI1: SD_CARD_________________*/
 // PA5(SCK)
 // PA4(CS)
 // PB4(MISO)
 // PB5(MOSI)
 uint8_t SPI1_TransmitReceive(uint8_t dataIn);
 void SPI1_OnlyTransmitBlockDMA(uint8_t* bufferIn);
+void SPI1_OnlyReceiveBlockDMA(uint8_t* bufferOut);
+
 
 static inline void SPI1_CsLow()
 {
@@ -29,7 +31,7 @@ static inline void SPI1_CsHigh()
 	GPIOA->BSRR |= GPIO_BSRR_BS_4;
 }
 
-//SPI2: FPGA
+/*_______________________SPI2: FPGA___________________*/
 uint16_t SPI2_TransmitReceive(uint16_t dataIn);
 
 

@@ -155,12 +155,7 @@ int8_t STORAGE_Read (uint8_t lun,
                  uint32_t blk_addr,                       
                  uint16_t blk_len)
 {
-
-  for(uint32_t i = 0; i < blk_len; i++)
-  {
-	  SdhcCardReadBlock(buf, blk_addr+i);
-	  buf+=512;
-  }
+  SdhcCardReadBlock(buf, blk_addr);
   return 0;
 }
 /**
@@ -176,11 +171,7 @@ int8_t STORAGE_Write (uint8_t lun,
                   uint32_t blk_addr,
                   uint16_t blk_len)
 {
-  for(uint32_t i = 0; i < blk_len; i++)
-  {
-	SdhcCardWriteBlock(buf, blk_addr+i);
-	buf+=512;
-  }
+  SdhcCardWriteBlock(buf, blk_addr);
   return (0);
 }
 

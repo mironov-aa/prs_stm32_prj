@@ -22,7 +22,7 @@ extern void g_ErrorHandler(uint8_t errorCode);
 
 uint8_t SdhcCardInitialize()
 {
-	const uint32_t maxRetries = 100;
+	const uint32_t maxRetries = 0xFFFF;
 	uint32_t retriesCounter = 0;
 	ResponseR1 responseR1;
 	ResponseR3 responseR3;
@@ -108,10 +108,11 @@ void SdhcCardReadBlock(uint8_t* buffer_out, uint32_t block_index)
 	SendCmd(CMD17,argument,0x1);
 	WaitForR1();
 	WaitForStartDataToken();
-	for(uint32_t i = 0; i < 512; i++)
-	{
-		buffer_out[i] = SPI1_TransmitReceive(0xFF);
-	}
+///	for(uint32_t i = 0; i < 512; i++)
+//	{
+//		buffer_out[i] = SPI1_TransmitReceive(0xFF);
+//	}
+	SPI1_OnlyReceiveBlockDMA(buffer_out);
 	SPI1_TransmitReceive(0xFF);//two bytes
 	SPI1_TransmitReceive(0xFF);//crc 16
 	SPI1_CsHigh();
@@ -133,11 +134,6 @@ void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index)
 
 	SPI1_TransmitReceive(START_BLOCK_TOKEN);
 	SPI1_OnlyTransmitBlockDMA(buffer_in);
-	/*
-	for(uint32_t i = 0; i < 512; i++)
-	{
-		SPI1_TransmitReceive(buffer_in[i]);//TODO:: Need DMA!
-	}*/
 
 	dataResponse = WaitForDataResponse();
 	while(SPI1_TransmitReceive(0xFF) != 0xFF);

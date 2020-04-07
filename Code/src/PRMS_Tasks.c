@@ -58,9 +58,9 @@ USB_CORE_HANDLE  USB_Device_dev;
 
 void ConfigureFreeRtosTasks(void)
 {
-	xButtonHandler = xTaskCreateStatic(vButtonTask, "BUTTON", 1024, NULL, 4, xButtonStack, &xButtonBuffer);
-	xMemoryHandler = xTaskCreateStatic(vMemoryTask, "MEM", 1024, NULL, 2, xMemoryStack, &xMemoryBuffer);
-	xFpgaHandler = xTaskCreateStatic(vFpgaTask, "FPGA", 1024, NULL, 3, xFpgaStack, &xFpgaBuffer);
+	xButtonHandler = xTaskCreateStatic(vButtonTask, "BUTTON", 512, NULL, 4, xButtonStack, &xButtonBuffer);
+	xMemoryHandler = xTaskCreateStatic(vMemoryTask, "MEM", 512, NULL, 2, xMemoryStack, &xMemoryBuffer);
+	xFpgaHandler = xTaskCreateStatic(vFpgaTask, "FPGA", 512, NULL, 3, xFpgaStack, &xFpgaBuffer);
 }
 
 static void vButtonTask(void* argument)

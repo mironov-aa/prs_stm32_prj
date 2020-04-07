@@ -16,8 +16,8 @@ int main(void)
 	}
 
 	ConfigurePrms();
-	ConfigureFreeRtosTasks();
 
+	ConfigureFreeRtosTasks();
 	vTaskStartScheduler();
 	for(;;);
 }

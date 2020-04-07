@@ -21,7 +21,7 @@ static inline void ConfigureTim3(void);
 extern uint8_t g_isHseStart;
 extern uint8_t SdhcCardInitialize();
 
-
+extern void g_ErrorHandler(uint8_t errorCode);
 void ConfigurePrms(void)
 {
 	ConfigureGpio();

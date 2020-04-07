@@ -49,3 +49,33 @@ void SPI1_OnlyTransmitBlockDMA(uint8_t* bufferIn)
 	DMA1->IFCR |= DMA_IFCR_CTCIF2;//clear flag
 	DMA1_Channel2->CCR &= ~DMA_CCR_EN;//disable DMA
 }
+
+void SPI1_OnlyReceiveBlockDMA(uint8_t* bufferOut)
+{
+	uint8_t dummy_send = 0xFF;
+
+	/* DMA1 Channel2 SPI1_RX config */
+	DMA1_Channel2->CCR = DMA_CCR_MINC;//memory increment, read from peripheral
+	DMA1_Channel2->CMAR = (uint32_t)bufferOut;
+	DMA1_Channel2->CNDTR = 512; //Data size
+	/* DMA1 Channel3 SPI1_TX config */
+	DMA1_Channel3->CCR = DMA_CCR_DIR; //read from memory
+	DMA1_Channel3->CMAR = (uint32_t)&dummy_send;
+	DMA1_Channel3->CNDTR = 512; //Data size
+
+	__asm volatile( "dmb" ::: "memory" );
+	DMA1_Channel3->CCR |= DMA_CCR_EN;
+	DMA1_Channel2->CCR |= DMA_CCR_EN;
+
+	__asm volatile( "dmb" ::: "memory" );
+	while(!(DMA1->ISR & DMA_ISR_TCIF3)){}//wait till all transmit
+	__asm volatile( "dmb" ::: "memory" );
+	DMA1->IFCR |= DMA_IFCR_CTCIF3;//clear flag
+	DMA1_Channel3->CCR &= ~DMA_CCR_EN;//disable DMA
+
+	while(!(DMA1->ISR & DMA_ISR_TCIF2)){}//wait till all receive
+	__asm volatile( "dmb" ::: "memory" );
+	DMA1->IFCR |= DMA_IFCR_CTCIF2;//clear flag
+	DMA1_Channel2->CCR &= ~DMA_CCR_EN;//disable DMA
+}
+

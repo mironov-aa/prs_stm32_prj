@@ -34,8 +34,12 @@ void g_ErrorHandler(uint8_t errorCode)
 	taskDISABLE_INTERRUPTS();
 	for( ;; )
 	{
-		g_Delay(4800000);
-		GPIOC->ODR ^= GPIO_ODR_7;
-		g_Delay(4800000);
+		for(int i = 0; i < 2*errorCode; i++)
+		{
+			g_Delay(900000);
+			GPIOC->ODR ^= GPIO_ODR_7;
+			g_Delay(900000);
+		}
+		g_Delay(48000000);
 	}
 }
