@@ -12,12 +12,10 @@
 
 uint8_t g_isHseStart = 0; //< Set if HSE don't start after system_stm32f0xx.c::SetSysClock();
 
-uint8_t g_dataBuffer1[512];
-uint8_t g_dataBuffer2[512];
+
 uint8_t g_dataStartPattern[512];
 
-FATFS g_fatFs;
-FIL g_file;
+
 
 #ifdef FREERTOS_DEBUG
 volatile uint32_t g_highFrequencyTimerTicks = 0;

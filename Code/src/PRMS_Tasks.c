@@ -4,38 +4,66 @@
  *  Created on: Feb 21, 2020
  *      Author: mironov-aa
  */
-#include "stm32f0xx.h"
-#include "ff.h"
-#include "FreeRTOS.h"
-#include "task.h"
+
 #include "main.h"
+#include  "usbd_msc_core.h"
+#include  "usbd_usr.h"
 #include "PRMS_Tasks.h"
 
-extern TaskHandle_t xButtonHandler;
-extern TaskHandle_t xMemoryHandler;
-extern TaskHandle_t xFpgaHandler;
-
-extern uint8_t g_dataBuffer1[512];
-extern uint8_t g_dataStartPattern[512];
 
 extern void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index);
 extern void SdhcCardReadBlock(uint8_t* buffer_out, uint32_t block_index);
 extern void g_Delay(uint32_t timeout);
+extern uint8_t g_dataStartPattern[512];
 
-extern FIL g_file;
-extern FATFS g_fatFs;
+/*________________________Data buffers____________________________*/
+static uint8_t g_dataBuffer1[512];
+static uint8_t g_dataBuffer2[512];
 
-#include  "usbd_msc_core.h"
-#include  "usbd_usr.h"
+/*________________________Debug__________________________________*/
+#ifdef FREERTOS_DEBUG
+static TaskStatus_t debugArray[5] = {0};
+static uint32_t  totalRunTime = 0;//total run time since the target booted
+#endif
+
+/*________________________FatFS__________________________________*/
+static FRESULT fResult;
+static FATFS g_fatFs;
+static FIL g_file;
+
+/*______________________FreeRTOS___________________________*/
+//Tasks buffer
+static StaticTask_t xButtonBuffer;
+static StaticTask_t xMemoryBuffer;
+static StaticTask_t xFpgaBuffer;
+
+//Tasks stack
+static StackType_t xButtonStack[512];
+static StackType_t xMemoryStack[512];
+static StackType_t xFpgaStack[512];
+
+//Tasks handler
+TaskHandle_t xButtonHandler = NULL;
+static TaskHandle_t xMemoryHandler = NULL;
+static TaskHandle_t xFpgaHandler = NULL;
+
+//Tasks function
+static void vButtonTask(void* argument);
+static void vMemoryTask(void* argument);
+static void vFpgaTask(void* argument);
+
+/*_____________________________USB Library______________________*/
 USB_CORE_HANDLE  USB_Device_dev;
 
 
-//Debug definition
-static TaskStatus_t debugArray[5] = {0};
-static uint32_t  totalRunTime = 0;//total run time since the target booted
-volatile static FRESULT fResult;
+void ConfigureFreeRtosTasks(void)
+{
+	xButtonHandler = xTaskCreateStatic(vButtonTask, "BUTTON", 1024, NULL, 4, xButtonStack, &xButtonBuffer);
+	xMemoryHandler = xTaskCreateStatic(vMemoryTask, "MEM", 1024, NULL, 2, xMemoryStack, &xMemoryBuffer);
+	xFpgaHandler = xTaskCreateStatic(vFpgaTask, "FPGA", 1024, NULL, 3, xFpgaStack, &xFpgaBuffer);
+}
 
-void vButtonTask(void* argument)
+static void vButtonTask(void* argument)
 {
 	volatile uint32_t interruptFlag;
 	unsigned int savedBytes = 0;
@@ -82,7 +110,7 @@ void vButtonTask(void* argument)
 }
 
 
-void vFpgaTask(void* argument)
+static void vFpgaTask(void* argument)
 {
 	uint32_t i = 0;
 	vTaskSuspend(xFpgaHandler);
@@ -99,7 +127,8 @@ void vFpgaTask(void* argument)
 	}
 }
 
-void vMemoryTask(void* argument)
+
+static void vMemoryTask(void* argument)
 {
 	unsigned int savedBytes = 0;
 	volatile uint32_t errorsCounter = 0;

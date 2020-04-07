@@ -19,7 +19,6 @@ static inline void WaitForStartDataToken();
 
 extern void g_Delay(uint32_t timeout);
 extern void g_ErrorHandler(uint8_t errorCode);
-extern volatile uint8_t g_dataBuffer[512];
 
 uint8_t SdhcCardInitialize()
 {
