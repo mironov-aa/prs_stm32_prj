@@ -1,9 +1,8 @@
 #include "stm32f072xb.h"
+#include "global.h"
 #include "PRMS_Configure.h"
 #include "PRMS_Tasks.h"
 #include "main.h"
-
-extern uint8_t g_dataStartPattern[512];
 
 int main(void)
 {
@@ -16,8 +15,8 @@ int main(void)
 	}
 
 	ConfigurePrms();
-
 	ConfigureFreeRtosTasks();
+
 	vTaskStartScheduler();
 	for(;;);
 }

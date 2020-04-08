@@ -27,9 +27,6 @@ extern uint8_t g_isHseStart;
 uint32_t SystemCoreClock = 48000000;
 __IO const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
-
-static void SetSysClock(void);
-
 /**
   * @brief  Setup the microcontroller system.
   *         Initialize the default HSI clock source, vector table location and the PLL configuration is reset.
@@ -94,91 +91,7 @@ void SystemInit(void)
 
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
-	
-	/* Configure the System clock frequency, AHB/APBx prescalers and Flash settings */
-  SetSysClock();
-
 }
-
-/**
-  * @brief  Configures the System clock frequency, AHB/APBx prescalers and Flash
-  *         settings.
-  * @note   This function should be called only once the RCC clock configuration
-  *         is reset to the default reset state (done in SystemInit() function).
-  * @param  None
-  * @retval None
-  */
-static void SetSysClock(void)
-{
-  /* SYSCLK, HCLK, PCLK configuration ----------------------------------------*/
-  /* At this stage the HSI is already enabled */
-
-  /* Enable Prefetch Buffer and set Flash Latency */
-  FLASH->ACR = FLASH_ACR_PRFTBE | FLASH_ACR_LATENCY;
-
-  /* PREDiv = 1*/
-  RCC->CFGR2 &= (uint32_t)~RCC_CFGR2_PREDIV;
-
-  /* HCLK = SYSCLK */
-  RCC->CFGR |= (uint32_t)RCC_CFGR_HPRE_DIV1;
-      
-  /* PCLK = HCLK */
-  RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE_DIV1;
-
-  /* Set HSE, CSS on */
-  RCC->CR |= (uint32_t)((RCC_CR_HSEON | RCC_CR_CSSON));
-  /* Wait till HSE start*/
-  uint16_t hseStartupCounter = 0;
-  while((!(RCC->CR & RCC_CR_HSERDY)) && (hseStartupCounter < HSE_STARTUP_TIMEOUT))
-  {
-	  hseStartupCounter++;
-  }
-
-  if((RCC->CR & RCC_CR_HSERDY))
-  {
-	  //If HSE start
-	  g_isHseStart = 1;//Set HSE Flag true
-	  /* PLL configuration = (HSE/PREDiv)*PLLMUL = (8/1)*6 = 48 */
-	  RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLMUL));
-	  RCC->CFGR |= (uint32_t)((RCC_CFGR_PLLSRC_HSE_PREDIV | RCC_CFGR_PLLMUL6));
-  }
-  else
-  {
-	  //If HSE don't start
-	  g_isHseStart = 0;//Set HSE Flag false
-	  /* PLL configuration = (HSI/2) * 12 = ~48 MHz */
-	  RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLMUL));
-	  RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_HSI_DIV2 | RCC_CFGR_PLLMUL12);
-  }
-
-  /* Enable PLL */
-  RCC->CR |= RCC_CR_PLLON;
-
-  /* Wait till PLL is ready */
-  while((RCC->CR & RCC_CR_PLLRDY) == 0)
-  {
-  }
-
-  /* Select PLL as system clock source */
-  RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_SW));
-  RCC->CFGR |= (uint32_t)RCC_CFGR_SW_PLL;    
-
-  /* Wait till PLL is used as system clock source */
-  while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS) != (uint32_t)RCC_CFGR_SWS_PLL)
-  {
-  }
-}
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

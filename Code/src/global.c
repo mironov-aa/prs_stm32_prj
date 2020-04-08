@@ -8,20 +8,14 @@
 #include "FreeRTOS.h"
 #include "stm32f072xb.h"
 #include "task.h"
-#include "main.h"
-
-uint8_t g_isHseStart = 0; //< Set if HSE don't start after system_stm32f0xx.c::SetSysClock();
-
-
-uint8_t g_dataStartPattern[512];
-
-
+#include "global.h"
 
 #ifdef FREERTOS_DEBUG
 volatile uint32_t g_highFrequencyTimerTicks = 0;
 #endif
 
 
+uint8_t g_dataStartPattern[512] = {0};
 
 void g_Delay(uint32_t timeout)
 {
@@ -30,7 +24,6 @@ void g_Delay(uint32_t timeout)
 
 void g_ErrorHandler(uint8_t errorCode)
 {
-
 	taskDISABLE_INTERRUPTS();
 	for( ;; )
 	{

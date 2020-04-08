@@ -6,27 +6,29 @@
  */
 #include <stdbool.h>
 #include "stm32f0xx.h"
+#include "global.h"
+#include "SDHC_card_driver.h"
 #include "main.h"
 #include "PRMS_Configure.h"
 
 
 
-static inline void ConfigureGpio(void);
-static inline void CongigureInterrupts(void); // Interrupts priority, NVIC & EXTI
-static inline void ConfigureSpi1(bool isInitial);
-static inline void ConfigureSpi1Dma();
-static inline void ConfigureSpi2(void);
-static inline void ConfigureTim3(void);
+static uint8_t isHseStart = 0; //< Set if HSE don't start
 
-extern uint8_t g_isHseStart;
-extern uint8_t SdhcCardInitialize();
+static void ConfigureRCC(void);// PLL, HSE, SYSCLK
+static void ConfigureGpio(void);
+static void CongigureInterrupts(void); // Interrupts priority, NVIC & EXTI
+static void ConfigureSpi1(bool isInitial);
+static void ConfigureSpi1Dma();
+static void ConfigureSpi2(void);
+static void ConfigureTim3(void);
 
-extern void g_ErrorHandler(uint8_t errorCode);
 void ConfigurePrms(void)
 {
+	ConfigureRCC();
 	ConfigureGpio();
 
-	if(!g_isHseStart)
+	if(!isHseStart)
 	{
 		GPIOC->BSRR |= GPIO_BSRR_BS_7; //Warning if HSE don't start!
 	}
@@ -44,7 +46,66 @@ void ConfigurePrms(void)
 #endif
 }
 
-static inline void ConfigureGpio(void)
+static void ConfigureRCC(void)
+{
+	/* SYSCLK, HCLK, PCLK configuration ----------------------------------------*/
+	/* At this stage the HSI is already enabled */
+	const uint16_t hseStartupTimeout = 0x5000;
+	uint16_t hseStartupCounter = 0;
+
+	/* Enable Prefetch Buffer and set Flash Latency */
+	FLASH->ACR = FLASH_ACR_PRFTBE | FLASH_ACR_LATENCY;
+
+	/* PREDiv = 1*/
+	RCC->CFGR2 &= (uint32_t)~RCC_CFGR2_PREDIV;
+
+	/* HCLK = SYSCLK */
+	RCC->CFGR |= (uint32_t)RCC_CFGR_HPRE_DIV1;
+
+	/* PCLK = HCLK */
+	RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE_DIV1;
+
+	/* Set HSE, CSS on */
+	RCC->CR |= (uint32_t)((RCC_CR_HSEON | RCC_CR_CSSON));
+	/* Wait till HSE start*/
+
+	while((!(RCC->CR & RCC_CR_HSERDY)) && (hseStartupCounter < hseStartupTimeout))
+	{
+		hseStartupCounter++;
+	}
+
+	if((RCC->CR & RCC_CR_HSERDY))
+	{
+		//If HSE start
+		isHseStart = 1;//Set HSE Flag true
+		/* PLL configuration = (HSE/PREDiv)*PLLMUL = (8/1)*6 = 48 */
+		RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLMUL));
+		RCC->CFGR |= (uint32_t)((RCC_CFGR_PLLSRC_HSE_PREDIV | RCC_CFGR_PLLMUL6));
+	}
+	else
+	{
+		//If HSE don't start
+		isHseStart = 0;//Set HSE Flag false
+		/* PLL configuration = (HSI/2) * 12 = ~48 MHz */
+		RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLMUL));
+		RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_HSI_DIV2 | RCC_CFGR_PLLMUL12);
+	}
+
+	/* Enable PLL */
+	RCC->CR |= RCC_CR_PLLON;
+
+	/* Wait till PLL is ready */
+	while((RCC->CR & RCC_CR_PLLRDY) == 0){}
+
+	/* Select PLL as system clock source */
+	RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_SW));
+	RCC->CFGR |= (uint32_t)RCC_CFGR_SW_PLL;
+
+	/* Wait till PLL is used as system clock source */
+	while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS) != (uint32_t)RCC_CFGR_SWS_PLL){}
+}
+
+static void ConfigureGpio(void)
 {
 	//Enable clock for port A, B & C
 	RCC->AHBENR |= (uint32_t)(RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN);
@@ -107,7 +168,7 @@ static inline void ConfigureGpio(void)
 					   GPIO_OTYPER_OT_8 | GPIO_OTYPER_OT_9); //Push-pull
 }
 
-static inline void CongigureInterrupts(void)
+static void CongigureInterrupts(void)
 {
 	//PA0 as source input
 	SYSCFG->EXTICR[0] &= ~SYSCFG_EXTICR1_EXTI0;
@@ -123,7 +184,7 @@ static inline void CongigureInterrupts(void)
 
 }
 
-static inline void ConfigureSpi1(bool isInitial)
+static void ConfigureSpi1(bool isInitial)
 {
 	/* Enable the peripheral clock SPI1 */
 	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
@@ -131,7 +192,7 @@ static inline void ConfigureSpi1(bool isInitial)
 	/* Correct disable SPI1*/
 	while((SPI1->SR & SPI_SR_FTLVL) != 0){} //no more data to transmit
 	while((SPI1->SR & SPI_SR_BSY) != 0){} //the last data frame is processed
-	__asm volatile( "dmb" ::: "memory" );
+	__MEMORY_BARRIER;
 	SPI1->CR1 = 0; //disable SPI
 	while((SPI1->SR & SPI_SR_FRLVL) != 0)
 	{
@@ -148,11 +209,11 @@ static inline void ConfigureSpi1(bool isInitial)
 	SPI1->CR1 |= (isInitial)? (SPI_CR1_BR) : (SPI_CR1_BR_0);
 	SPI1->CR2 = SPI_CR2_FRXTH | SPI_CR2_SSOE | SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2 | SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN
 										| SPI_CR2_TXEIE | SPI_CR2_RXNEIE; /* (3) */
-	__asm volatile( "dmb" ::: "memory" );
+	__MEMORY_BARRIER;
 	SPI1->CR1 |= SPI_CR1_SPE; /* (4) */
 }
 
-static inline void ConfigureSpi1Dma()
+static void ConfigureSpi1Dma()
 {
 	 // Enable the peripheral clock DMA1
 	 RCC->AHBENR |= RCC_AHBENR_DMA1EN;
@@ -164,9 +225,7 @@ static inline void ConfigureSpi1Dma()
 	  DMA1_Channel3->CPAR = (uint32_t)&(SPI1->DR); //Peripheral address
 }
 
-
-
-static inline void ConfigureSpi2(void)
+static void ConfigureSpi2(void)
 {
 	 /* Enable the peripheral clock SPI2 */
 	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
@@ -177,13 +236,13 @@ static inline void ConfigureSpi2(void)
 	/* (2) Enable SPI2 */
 	SPI2->CR1 = SPI_CR1_CPHA | SPI_CR1_CPOL;
 	SPI2->CR2 = SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2 | SPI_CR2_FRXTH; /* (1) */
-	__asm volatile( "dmb" ::: "memory" );
+	__MEMORY_BARRIER;
 	SPI2->CR1 |= SPI_CR1_SPE; /* (2) */
 
 }
 
 #ifdef FREERTOS_DEBUG
-static inline void ConfigureTim3(void)
+static void ConfigureTim3(void)
 {
 	//Configure TIM3 for configGENERATE_RUN_TIME_STATS:FreeRTOSConfig.h
 	/* Enable the peripheral clock TIM3 */
@@ -191,6 +250,7 @@ static inline void ConfigureTim3(void)
 	TIM3->CR1 |= TIM_CR1_URS;//only counter overflow generate update interrupt
 	TIM3->ARR = 480;// Update interrupt each 1/100kHZ.
 	TIM3->DIER |= TIM_DIER_UIE;//Update interrupt enable
+	__MEMORY_BARRIER;
 	TIM3->CR1 |= TIM_CR1_CEN;//Enable counter
 
 	/* Configure IT */

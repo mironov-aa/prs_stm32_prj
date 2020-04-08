@@ -5,9 +5,12 @@
  *      Author: mironov-aa
  */
 
+#include "global.h"
 #include "spi_driver.h"
-#include "SDHC_card_driver.h"
 #include "SDHC_card_encoding.h"
+#include "SDHC_card_driver.h"
+
+
 
 static void SendCmd(CommandIndex command, CommandArgument argument, uint8_t crc);
 static inline ResponseR1 WaitForR1();
@@ -15,10 +18,6 @@ static inline ResponseR2 WaitForR2();
 static inline ResponseR7 WaitForR7();//TODO:: !!!!
 static inline DataResponse WaitForDataResponse();
 static inline void WaitForStartDataToken();
-
-
-extern void g_Delay(uint32_t timeout);
-extern void g_ErrorHandler(uint8_t errorCode);
 
 uint8_t SdhcCardInitialize()
 {
@@ -215,8 +214,6 @@ static inline DataResponse WaitForDataResponse()
 
 	return dataResponse;
 }
-
-
 
 static inline void WaitForStartDataToken()
 {

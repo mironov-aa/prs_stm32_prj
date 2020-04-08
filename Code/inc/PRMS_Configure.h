@@ -9,9 +9,8 @@
 #define INC_PRMS_CONFIGURE_H_
 
 
+//Initialize stm32 peripheral and external memory
 void ConfigurePrms(void);
-
-
 
 
 
