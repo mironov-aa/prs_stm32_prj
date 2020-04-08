@@ -19,8 +19,8 @@ static void ConfigureRCC(void);// PLL, HSE, SYSCLK
 static void ConfigureGpio(void);
 static void CongigureInterrupts(void); // Interrupts priority, NVIC & EXTI
 static void ConfigureSpi1(bool isInitial);
-static void ConfigureSpi1Dma();
 static void ConfigureSpi2(void);
+static void ConfigureDma(void);
 static void ConfigureTim3(void);
 
 void ConfigurePrms(void)
@@ -39,7 +39,7 @@ void ConfigurePrms(void)
 	ConfigureSpi1(false);
 	ConfigureSpi2();
 
-	ConfigureSpi1Dma();
+	ConfigureDma();
 
 #ifdef FREERTOS_DEBUG
 	ConfigureTim3();
@@ -207,22 +207,10 @@ static void ConfigureSpi1(bool isInitial)
 	SPI1->CR1 = SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPHA | SPI_CR1_CPOL; /* (1) */
 	SPI1->CR1 &= ~SPI_CR1_BR; /* (2) */
 	SPI1->CR1 |= (isInitial)? (SPI_CR1_BR) : (SPI_CR1_BR_0);
-	SPI1->CR2 = SPI_CR2_FRXTH | SPI_CR2_SSOE | SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2 | SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN
-										| SPI_CR2_TXEIE | SPI_CR2_RXNEIE; /* (3) */
+	SPI1->CR2 = SPI_CR2_FRXTH | SPI_CR2_SSOE | SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2 | SPI_CR2_TXDMAEN |
+			        SPI_CR2_RXDMAEN; /* (3) */
 	__MEMORY_BARRIER;
 	SPI1->CR1 |= SPI_CR1_SPE; /* (4) */
-}
-
-static void ConfigureSpi1Dma()
-{
-	 // Enable the peripheral clock DMA1
-	 RCC->AHBENR |= RCC_AHBENR_DMA1EN;
-
-	  /* DMA1 Channel2 SPI1_RX config */
-	  //Read from peripheral, Peripheral, Memory size 1byte,
-	  DMA1_Channel2->CPAR = (uint32_t)&(SPI1->DR);//Peripheral address
-	  /* DMA1 Channel3 SPI1_TX config */
-	  DMA1_Channel3->CPAR = (uint32_t)&(SPI1->DR); //Peripheral address
 }
 
 static void ConfigureSpi2(void)
@@ -231,14 +219,29 @@ static void ConfigureSpi2(void)
 	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
 
 	/* Configure SPI2 in slave */
-	/* nSS hard, slave, CPOL and CPHA at 1 (rising first edge) */
-	/* (1) 8-bit Rx fifo */
+	/* Master selection, CPOL at 0 and CPHA at 1 , software slave management & Internal slave select */
+	/* (1) 16-bit Rx fifo */
 	/* (2) Enable SPI2 */
-	SPI2->CR1 = SPI_CR1_CPHA | SPI_CR1_CPOL;
-	SPI2->CR2 = SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2 | SPI_CR2_FRXTH; /* (1) */
+	SPI2->CR1 = SPI_CR1_MSTR | SPI_CR1_CPHA | SPI_CR1_SSM | SPI_CR1_SSI;
+	SPI2->CR2 = SPI_CR2_DS | SPI_CR2_SSOE | SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN; /* (1) */
 	__MEMORY_BARRIER;
 	SPI2->CR1 |= SPI_CR1_SPE; /* (2) */
 
+}
+
+static void ConfigureDma(void)
+{
+	 // Enable the peripheral clock DMA1
+	 RCC->AHBENR |= RCC_AHBENR_DMA1EN;
+
+	  /* DMA1 Channel2 SPI1_RX config */
+	  DMA1_Channel2->CPAR = (uint32_t)&(SPI1->DR);//Peripheral address
+	  /* DMA1 Channel3 SPI1_TX config */
+	  DMA1_Channel3->CPAR = (uint32_t)&(SPI1->DR); //Peripheral address
+	  /* DMA1 Channel4 SPI2_RX config */
+	  DMA1_Channel4->CPAR = (uint32_t)&(SPI2->DR);//Peripheral address
+	  /* DMA1 Channel5 SPI2_TX config */
+	  DMA1_Channel5->CPAR = (uint32_t)&(SPI2->DR); //Peripheral address
 }
 
 #ifdef FREERTOS_DEBUG

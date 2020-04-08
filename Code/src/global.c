@@ -14,9 +14,6 @@
 volatile uint32_t g_highFrequencyTimerTicks = 0;
 #endif
 
-
-uint8_t g_dataStartPattern[512] = {0};
-
 void g_Delay(uint32_t timeout)
 {
 	for(volatile uint32_t i = 0; i < timeout; i++){}

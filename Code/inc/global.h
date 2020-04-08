@@ -19,9 +19,8 @@ void g_ErrorHandler(uint8_t errorCode);
 
 
 #ifdef FREERTOS_DEBUG
-extern volatile uint32_t g_highFrequencyTimerTicks = 0;
+extern volatile uint32_t g_highFrequencyTimerTicks;
 #endif
-extern uint8_t g_dataStartPattern[512];
 
 
 

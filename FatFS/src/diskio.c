@@ -9,13 +9,10 @@
 
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
-
+#include "SDHC_card_driver.h"
 
 #define SECTOR_COUNT 0x700000
 #define SECTOR_SIZE 512
-
-extern void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index);
-extern void SdhcCardReadBlock(uint8_t* buffer_out, uint32_t block_index);
 
 
 /*-----------------------------------------------------------------------*/
@@ -53,13 +50,11 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-
-
-
-
+	uint8_t* buffPointer = (uint8_t*)buff;
 	for(uint32_t i = 0; i < count; i++)
 	{
-		SdhcCardReadBlock(buff, sector + i);
+		SdhcCardReadBlock(buffPointer, sector + i);
+		buffPointer += 512;
 	}
 
 	return RES_OK;

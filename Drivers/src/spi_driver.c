@@ -80,3 +80,32 @@ void SPI1_OnlyReceiveBlockDMA(uint8_t* bufferOut)
 	DMA1_Channel2->CCR &= ~DMA_CCR_EN;//disable DMA
 }
 
+void SPI2_OnlyReceive(uint16_t* bufferOut, uint32_t countHalfWords)
+{
+	uint8_t dummy_send = 0xFF;
+
+	/* DMA1 Channel4 SPI2_RX config */
+	DMA1_Channel4->CCR = DMA_CCR_MINC | DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0;//memory increment, read from peripheral, 16bit
+	DMA1_Channel4->CMAR = (uint32_t)bufferOut;
+	DMA1_Channel4->CNDTR = countHalfWords; //Data size
+	/* DMA1 Channel5 SPI2_TX config */
+	DMA1_Channel5->CCR = DMA_CCR_DIR | DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0; //read from memory
+	DMA1_Channel5->CMAR = (uint32_t)&dummy_send;
+	DMA1_Channel5->CNDTR = countHalfWords; //Data size
+
+	__MEMORY_BARRIER;
+	DMA1_Channel4->CCR |= DMA_CCR_EN;
+	DMA1_Channel5->CCR |= DMA_CCR_EN;
+
+	__MEMORY_BARRIER;
+	while(!(DMA1->ISR & DMA_ISR_TCIF5)){}//wait till all transmit
+	__MEMORY_BARRIER;
+	DMA1->IFCR |= DMA_IFCR_CTCIF5;//clear flag
+	DMA1_Channel5->CCR &= ~DMA_CCR_EN;//disable DMA
+
+	while(!(DMA1->ISR & DMA_ISR_TCIF4)){}//wait till all receive
+	__MEMORY_BARRIER;
+	DMA1->IFCR |= DMA_IFCR_CTCIF4;//clear flag
+	DMA1_Channel4->CCR &= ~DMA_CCR_EN;//disable DMA
+}
+

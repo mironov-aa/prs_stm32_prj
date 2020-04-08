@@ -32,7 +32,7 @@ static inline void SPI1_CsHigh()
 }
 
 /*_______________________SPI2: FPGA___________________*/
-uint16_t SPI2_TransmitReceive(uint16_t dataIn);
+void SPI2_OnlyReceive(uint16_t* bufferOut, uint32_t countHalfWords);
 
 
 

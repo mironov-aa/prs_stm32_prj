@@ -9,6 +9,7 @@
 #include "task.h"
 #include "main.h"
 #include "PRMS_Interrupts.h"
+#include "usb_dcd_int.h"
 
 extern TaskHandle_t xButtonHandler;
 
@@ -36,4 +37,9 @@ void TIM3_IRQHandler(void)
 		g_highFrequencyTimerTicks++;
 	}
 #endif
+}
+
+void USB_IRQHandler(void)
+{
+	USB_Istr();
 }

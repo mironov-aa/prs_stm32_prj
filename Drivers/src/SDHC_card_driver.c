@@ -107,10 +107,6 @@ void SdhcCardReadBlock(uint8_t* buffer_out, uint32_t block_index)
 	SendCmd(CMD17,argument,0x1);
 	WaitForR1();
 	WaitForStartDataToken();
-///	for(uint32_t i = 0; i < 512; i++)
-//	{
-//		buffer_out[i] = SPI1_TransmitReceive(0xFF);
-//	}
 	SPI1_OnlyReceiveBlockDMA(buffer_out);
 	SPI1_TransmitReceive(0xFF);//two bytes
 	SPI1_TransmitReceive(0xFF);//crc 16
