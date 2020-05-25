@@ -8,6 +8,6 @@
 #ifndef INC_MAIN_H_
 #define INC_MAIN_H_
 
-#define FREERTOS_DEBUG
+//#define FREERTOS_DEBUG
 
 #endif /* INC_MAIN_H_ */

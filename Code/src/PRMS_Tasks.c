@@ -85,8 +85,8 @@ static void vButtonTask(void* argument)
 		{
 			if((GPIOC->ODR & GPIO_ODR_6))
 			{
-				vTaskSuspend(xMemoryHandler);
 				vTaskSuspend(xFpgaHandler);
+				vTaskSuspend(xMemoryHandler);
 				fResult = f_close(&g_file);
 				fResult = f_unmount("");
 				DCD_DevConnect(&USB_Device_dev);
@@ -94,8 +94,8 @@ static void vButtonTask(void* argument)
 			else
 			{
 				DCD_DevDisconnect(&USB_Device_dev);
-				vTaskResume(xMemoryHandler);
 				vTaskResume(xFpgaHandler);
+				vTaskResume(xMemoryHandler);
 				fResult = f_mount(&g_fatFs, "", 1);
 				fResult = f_open(&g_file, "test.bin", FA_OPEN_APPEND | FA_WRITE);
 				fResult = f_write(&g_file, dataStartPattern, 512, &savedBytes);
@@ -144,7 +144,10 @@ static void vMemoryTask(void* argument)
 	while(1)
 	{
 		dataAddress = ulTaskNotifyTake((uint32_t)~0, portMAX_DELAY);
-		fResult = f_write(&g_file, (uint8_t*)dataAddress, 512, &savedBytes);
+		if(dataAddress != 0)
+		{
+			fResult = f_write(&g_file, (uint8_t*)dataAddress, 512, &savedBytes);
+		}
 	}
 }
 

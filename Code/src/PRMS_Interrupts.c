@@ -19,7 +19,7 @@ extern volatile uint32_t g_highFrequencyTimerTicks;
 
 void EXTI0_1_IRQHandler(void)
 {
-	xTaskNotifyFromISR(xButtonHandler,(uint32_t)~0, eSetBits,NULL);//Send notify to vButtonTask;
+	xTaskNotifyFromISR(xButtonHandler,(uint32_t)~0, eSetBits, NULL);//Send notify to vButtonTask;
 	EXTI->PR |= EXTI_PR_PIF0;//Clear Interrupt
 }
 
