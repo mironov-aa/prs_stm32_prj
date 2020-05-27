@@ -33,3 +33,4 @@ void g_ErrorHandler(uint8_t errorCode)
 		g_Delay(48000000);
 	}
 }
+

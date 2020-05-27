@@ -5,17 +5,35 @@
  *      Author: mironov-aa
  */
 #include <stdbool.h>
+#include "string.h"
+#include "stdlib.h"
 #include "stm32f0xx.h"
 #include "global.h"
 #include "SDHC_card_driver.h"
 #include "main.h"
 #include "PRMS_Configure.h"
+#include "ff.h"
 
+static const USettings default_globalSettings = {'T','I','M','E',':','1','3','3','7','0','0','\n',
+												 'S','T',':','0','\n',
+												 'D','A','T','E',':','0','1','0','9','1','1','\n',
+												 'S','D',':','0','\n',
+												 'C','N','T',':','1','6','\n',
+												 'P','R','D',':','1','0'};
 
 
 static uint8_t isHseStart = 0; //< Set if HSE don't start
 
+static FRESULT fResult;
+static FATFS g_fatFs;
+static FIL g_file;
+
+
 static void ConfigureRCC(void);// PLL, HSE, SYSCLK
+static void ConfigureRTC(void);
+static void InitRTC(uint32_t newTime, uint32_t newDate);
+static void ConfigureRtcTime(void);//change RTC time, if file time.txt exist!
+static void ConfigureSettings(void);
 static void ConfigureGpio(void);
 static void CongigureInterrupts(void); // Interrupts priority, NVIC & EXTI
 static void ConfigureSpi1(bool isInitial);
@@ -32,15 +50,16 @@ void ConfigurePrms(void)
 	{
 		GPIOC->BSRR |= GPIO_BSRR_BS_7; //Warning if HSE don't start!
 	}
-
+	ConfigureRTC();
 	CongigureInterrupts();
 	ConfigureSpi1(true);
 	SdhcCardInitialize();
 	ConfigureSpi1(false);
 	ConfigureSpi2();
-
 	ConfigureDma();
 
+
+	ConfigureRtcTime();
 #ifdef FREERTOS_DEBUG
 	ConfigureTim3();
 #endif
@@ -103,6 +122,97 @@ static void ConfigureRCC(void)
 
 	/* Wait till PLL is used as system clock source */
 	while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS) != (uint32_t)RCC_CFGR_SWS_PLL){}
+}
+
+static void ConfigureRTC(void)
+{
+    /* Enable the peripheral clock RTC */
+	/* (1) Enable the LSI */
+	/* (2) Wait while it is not ready */
+	/* (3) Enable PWR clock */
+	/* (4) Enable write in RTC domain control register */
+	/* (5) LSI for RTC clock */
+	/* (6) Disable PWR clock */
+	RCC->CSR |= RCC_CSR_LSION; /* (1) */
+	while((RCC->CSR & RCC_CSR_LSIRDY)!=RCC_CSR_LSIRDY) /* (2) */
+	{
+	  /* add time out here for a robust application */
+	}
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN; /* (3) */
+	PWR->CR |= PWR_CR_DBP; /* (4) */
+	RCC->BDCR = (RCC->BDCR & ~RCC_BDCR_RTCSEL) | RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL_1; /* (5) */
+	RCC->APB1ENR &=~ RCC_APB1ENR_PWREN; /* (6) */
+}
+
+void InitRTC(uint32_t newTime, uint32_t newDate)
+{
+    /* RTC init mode */
+    /* Configure RTC */
+    /* (1) Write access for RTC registers */
+    /* (2) Enable init phase */
+    /* (3) Wait until it is allow to modify RTC register values */
+    /* (4) set prescaler, 40kHz/128 => 312 Hz, 312Hz/312 => 1Hz*/
+    /* (5) New time in TR new date in DR */
+    /* (6) Disable init phase */
+    /* (7) Disable write access for RTC registers */
+    RTC->WPR = 0xCA; /* (1) */
+    RTC->WPR = 0x53; /* (1) */
+    RTC->ISR |= RTC_ISR_INIT; /* (2) */
+    while((RTC->ISR & RTC_ISR_INITF)!=RTC_ISR_INITF) /* (3) */
+    {
+      /* add time out here for a robust application */
+    }
+    RTC->PRER = 0x007F0137; /* (4) */
+    RTC->TR = newTime; /* (5) */
+    RTC->DR = newDate; /* (5) */
+    RTC->ISR &=~ RTC_ISR_INIT; /* (6) */
+    RTC->WPR = 0xFE; /* (7) */
+    RTC->WPR = 0x64; /* (7) */
+}
+
+static void ConfigureRtcTime(void)
+{
+	uint8_t tmpBuffer[13] = {'Y','y','M','m', 'D', 'd', 'H', 'h', 'M', 'm', 'S', 's', '\n'};//Time format: YyMmDdHhMmSs without spaces
+	uint8_t strtolBuffer[6] = {'H', 'h', 'M', 'm', 'S', 's'};
+	uint32_t time = 0;
+	uint32_t date = 0;
+	fResult = f_mount(&g_fatFs, "", 1);
+	fResult = f_open(&g_file, "time.txt", FA_OPEN_EXISTING | FA_READ);
+	if(fResult == FR_OK)//if file exist
+	{
+		f_gets(tmpBuffer,13,&g_file);
+		strncpy(strtolBuffer,tmpBuffer,6);
+		date = strtol(strtolBuffer, NULL, 16);
+		strncpy(strtolBuffer, &tmpBuffer[6],6);
+		time = strtol(strtolBuffer, NULL, 16);
+		fResult = f_close(&g_file);
+		fResult = f_unlink("time.txt");
+		InitRTC(time, date);
+	}
+	else if(RTC->DR == 0x00002101)//if initial value
+	{
+		InitRTC(0x133700, 0x010911);
+		fResult = f_close(&g_file);
+		fResult = f_unmount("");
+	}
+	fResult = f_close(&g_file);
+	fResult = f_unmount("");
+}
+
+static void ConfigureSettings(void)
+{
+	unsigned int savedBytes = 0;
+	fResult = f_mount(&g_fatFs, "", 1);
+	fResult = f_open(&g_file, "settings.cfg", FA_OPEN_EXISTING | FA_READ);
+	if(fResult == FR_OK)//if file exist
+	{
+		fResult = f_open(&g_file, "settings.cfg", FA_OPEN_APPEND | FA_WRITE);
+		fResult = f_write(&g_file, (uint8_t*)default_globalSettings.byteArray, 512, &savedBytes);
+	}
+	else
+	{
+
+	}
 }
 
 static void ConfigureGpio(void)
@@ -180,7 +290,6 @@ static void CongigureInterrupts(void)
 
 	//Configure NVIC for push button on PA0
 	NVIC_SetPriority(EXTI0_1_IRQn, 0);
-	NVIC_EnableIRQ(EXTI0_1_IRQn);
 
 }
 

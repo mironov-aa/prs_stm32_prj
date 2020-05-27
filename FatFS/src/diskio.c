@@ -10,6 +10,7 @@
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
 #include "SDHC_card_driver.h"
+#include "stm32f072xb.h"
 
 #define SECTOR_COUNT 0x700000
 #define SECTOR_SIZE 512
@@ -88,6 +89,11 @@ DRESULT disk_write (
 #endif
 
 
+
+
+
+
+
 /*-----------------------------------------------------------------------*/
 /* Miscellaneous Functions                                               */
 /*-----------------------------------------------------------------------*/
@@ -124,3 +130,29 @@ DRESULT disk_ioctl (
 	}
 }
 
+
+/*
+ *
+ *
+bit31:25
+    Year origin from the 1980 (0..127, e.g. 37 for 2017)
+bit24:21
+    Month (1..12)
+bit20:16
+    Day of the month (1..31)
+bit15:11
+    Hour (0..23)
+bit10:5
+    Minute (0..59)
+bit4:0
+    Second / 2 (0..29, e.g. 25 for 50)
+ */
+DWORD get_fattime(void)
+{
+	return (((((RTC->DR & RTC_DR_YT) >> 20 ) * 10 ) + 20 + ((RTC->DR & RTC_DR_YU) >> 16)) << 25)  |
+		   (((((RTC->DR & RTC_DR_MT) >> 12 ) * 10 ) + ((RTC->DR & RTC_DR_MU) >> 8) << 21))  |
+		   (((((RTC->DR & RTC_DR_DT) >> 4) * 10 ) + (RTC->DR & RTC_DR_DU)) << 16)  |
+		   (((((RTC->TR & RTC_TR_HT) >> 20) * 10 ) + ((RTC->TR & RTC_TR_HU) >> 16)) << 11)  |
+		   (((((RTC->TR & RTC_TR_MNT) >> 12) * 10 ) + ((RTC->TR & RTC_TR_MNU) >> 8)) << 5) |
+		   (((((RTC->TR & RTC_TR_ST) >> 4) * 10 ) + (RTC->TR & RTC_TR_SU)) >> 1);// Seconds/2;
+}

@@ -118,8 +118,6 @@ void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index)
 	CommandArgument argument;
 	DataResponse dataResponse;
 	ResponseR2 responseR2;
-	const uint32_t busyTimeout = 10;
-	uint32_t busyTimeoutCounter = 0;
 
 	argument.value = block_index;
 
@@ -157,7 +155,7 @@ static void SendCmd(CommandIndex command, CommandArgument argument, uint8_t crc)
 
 static inline ResponseR1 WaitForR1()
 {
-	const uint32_t maxRetries = 50;
+	const uint32_t maxRetries = 0xFFFF;
 	ResponseR1 responseR1;
 	uint32_t retriesCounter = 0;
 	do
@@ -176,7 +174,7 @@ static inline ResponseR1 WaitForR1()
 
 static inline ResponseR2 WaitForR2()
 {
-	const uint32_t maxRetries = 50;
+	const uint32_t maxRetries = 0xFFFF;
 	ResponseR2 responseR2;
 	uint32_t retriesCounter = 0;
 	do
@@ -194,7 +192,7 @@ static inline ResponseR2 WaitForR2()
 
 static inline DataResponse WaitForDataResponse()
 {
-	const uint32_t maxRetries = 50;
+	const uint32_t maxRetries = 0xFFFF;
 	DataResponse dataResponse;
 	uint32_t retriesCounter = 0;
 	do
