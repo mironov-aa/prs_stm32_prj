@@ -127,16 +127,16 @@ static void vFpgaTask(void* argument)
 		while(currentPointer < secondBlockPointer)
 		{
 			SPI2_OnlyReceive((uint16_t*)currentPointer, 8);
-			currentPointer += 16;
-			vTaskDelay(10*portTICK_PERIOD_MS);
+			currentPointer += g_settings.numberOfCounters;
+			vTaskDelay(g_settings.periodMs);
 		}
 		xTaskNotify(xMemoryHandler,(uint32_t)firstBlockPointer, eSetBits);
 
 		while(currentPointer < endPointer)
 		{
 			SPI2_OnlyReceive((uint16_t*)currentPointer, 8);
-			currentPointer += 16;
-			vTaskDelay(10*portTICK_PERIOD_MS);
+			currentPointer += g_settings.numberOfCounters;
+			vTaskDelay(g_settings.periodMs);
 		}
 		xTaskNotify(xMemoryHandler,(uint32_t)secondBlockPointer, eSetBits);
 		currentPointer = firstBlockPointer;

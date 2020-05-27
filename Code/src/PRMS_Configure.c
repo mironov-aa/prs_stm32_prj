@@ -15,9 +15,8 @@
 #include "ff.h"
 
 static const USettings default_globalSettings = {'T','I','M','E',':','1','3','3','7','0','0','\n',
-												 'S','T',':','0','\n',
 												 'D','A','T','E',':','0','1','0','9','1','1','\n',
-												 'S','D',':','0','\n',
+												 'S','E','T',':','0','\n',
 												 'C','N','T',':','1','6','\n',
 												 'P','R','D',':','1','0'};
 
@@ -32,7 +31,6 @@ static FIL g_file;
 static void ConfigureRCC(void);// PLL, HSE, SYSCLK
 static void ConfigureRTC(void);
 static void InitRTC(uint32_t newTime, uint32_t newDate);
-static void ConfigureRtcTime(void);//change RTC time, if file time.txt exist!
 static void ConfigureSettings(void);
 static void ConfigureGpio(void);
 static void CongigureInterrupts(void); // Interrupts priority, NVIC & EXTI
@@ -58,8 +56,7 @@ void ConfigurePrms(void)
 	ConfigureSpi2();
 	ConfigureDma();
 
-
-	ConfigureRtcTime();
+	ConfigureSettings();
 #ifdef FREERTOS_DEBUG
 	ConfigureTim3();
 #endif
@@ -170,49 +167,44 @@ void InitRTC(uint32_t newTime, uint32_t newDate)
     RTC->WPR = 0x64; /* (7) */
 }
 
-static void ConfigureRtcTime(void)
-{
-	uint8_t tmpBuffer[13] = {'Y','y','M','m', 'D', 'd', 'H', 'h', 'M', 'm', 'S', 's', '\n'};//Time format: YyMmDdHhMmSs without spaces
-	uint8_t strtolBuffer[6] = {'H', 'h', 'M', 'm', 'S', 's'};
-	uint32_t time = 0;
-	uint32_t date = 0;
-	fResult = f_mount(&g_fatFs, "", 1);
-	fResult = f_open(&g_file, "time.txt", FA_OPEN_EXISTING | FA_READ);
-	if(fResult == FR_OK)//if file exist
-	{
-		f_gets(tmpBuffer,13,&g_file);
-		strncpy(strtolBuffer,tmpBuffer,6);
-		date = strtol(strtolBuffer, NULL, 16);
-		strncpy(strtolBuffer, &tmpBuffer[6],6);
-		time = strtol(strtolBuffer, NULL, 16);
-		fResult = f_close(&g_file);
-		fResult = f_unlink("time.txt");
-		InitRTC(time, date);
-	}
-	else if(RTC->DR == 0x00002101)//if initial value
-	{
-		InitRTC(0x133700, 0x010911);
-		fResult = f_close(&g_file);
-		fResult = f_unmount("");
-	}
-	fResult = f_close(&g_file);
-	fResult = f_unmount("");
-}
-
 static void ConfigureSettings(void)
 {
+	USettings savedSettings;
+	uint32_t date = 0;
+	uint32_t time = 0;
 	unsigned int savedBytes = 0;
 	fResult = f_mount(&g_fatFs, "", 1);
 	fResult = f_open(&g_file, "settings.cfg", FA_OPEN_EXISTING | FA_READ);
 	if(fResult == FR_OK)//if file exist
 	{
-		fResult = f_open(&g_file, "settings.cfg", FA_OPEN_APPEND | FA_WRITE);
-		fResult = f_write(&g_file, (uint8_t*)default_globalSettings.byteArray, 512, &savedBytes);
+		f_read(&g_file, savedSettings.byteArray, sizeof(savedSettings.byteArray), &savedBytes);
+		fResult = f_close(&g_file);
 	}
 	else
 	{
-
+		fResult = f_open(&g_file, "settings.cfg", FA_OPEN_APPEND | FA_WRITE);
+		fResult = f_write(&g_file, default_globalSettings.byteArray, sizeof(default_globalSettings.byteArray), &savedBytes);
+		savedSettings = default_globalSettings;
+		fResult = f_close(&g_file);
+		date = strtol(default_globalSettings.Field.dataValue, NULL, 16);
+		time = strtol(default_globalSettings.Field.timeValue, NULL, 16);
+		InitRTC(time, date);
 	}
+	g_settings.numberOfCounters = atoi(savedSettings.Field.numberOfCounters);
+	g_settings.periodMs = atoi(savedSettings.Field.periodMs);
+
+	if(savedSettings.Field.setTime == '1')
+	{
+		date = strtol(savedSettings.Field.dataValue, NULL, 16);
+		time = strtol(savedSettings.Field.timeValue, NULL, 16);
+		InitRTC(time, date);
+		savedSettings.Field.setTime = '0';
+		fResult = f_open(&g_file, "settings.cfg", FA_CREATE_ALWAYS | FA_WRITE);
+		fResult = f_write(&g_file, savedSettings.byteArray, sizeof(default_globalSettings.byteArray), &savedBytes);
+		fResult = f_close(&g_file);
+	}
+	fResult = f_close(&g_file);
+	fResult = f_unmount("");
 }
 
 static void ConfigureGpio(void)

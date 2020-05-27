@@ -34,3 +34,9 @@ void g_ErrorHandler(uint8_t errorCode)
 	}
 }
 
+
+
+
+volatile uint8_t g_settings_numberOfCounters = 0;
+volatile uint8_t g_settings_period = 0;
+
