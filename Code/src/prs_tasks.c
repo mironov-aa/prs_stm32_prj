@@ -72,6 +72,8 @@ void ConfigureFreeRtosTasks(void)
                                         ucQueueStorageArea,
                                         &xQueue);
     
+    xMutex = xSemaphoreCreateMutexStatic(&xMutexBuffer);
+
     xButtonHandler = xTaskCreateStatic(vButtonTask, 
                                        "BUTTON", 
                                        sizeof(xButtonStack)/4, NULL, 
@@ -101,7 +103,7 @@ static void vButtonTask(void* argument)
     volatile uint32_t interruptFlag;
     uint32_t savedBytes = 0;
     //time: Hh:Mm:Ss
-    uint8_t charBuffer[10] = {'H','h','M','m','S','s','.','b','i','n'};
+    uint8_t charBuffer[11] = {'H','h','M','m','S','s','.','b','i','n','\n'};
     USBD_Init(&USB_Device_dev,&USR_desc, &USBD_MSC_cb, &USR_cb);
     NVIC_EnableIRQ(EXTI0_1_IRQn); //Enable push button EXTI
     while(1)
@@ -123,22 +125,19 @@ static void vButtonTask(void* argument)
             }
             else
             {
+            	uint8_t index = 0;
                 itoa(RTC->TR, charBuffer, 16);//generate file name
-                if( charBuffer[5] == '\n' )
+                for(index = 0; index < 10; index++)
                 {
-                    charBuffer[5] = '.';
-                    charBuffer[6] = 'b';
-                    charBuffer[7] = 'i';
-                    charBuffer[8] = 'n';
-                    charBuffer[9] = '\n';
+                	if(charBuffer[index] == '\0')
+                		break;
                 }
-                else
-                {
-                    charBuffer[6] = '.';
-                    charBuffer[7] = 'b';
-                    charBuffer[8] = 'i';
-                    charBuffer[9] = 'n';
-                }
+                charBuffer[index++] = '.';
+                charBuffer[index++] = 'b';
+                charBuffer[index++] = 'i';
+                charBuffer[index++] = 'n';
+                charBuffer[index] = '\n';
+
                 DCD_DevDisconnect(&USB_Device_dev);
                 vTaskResume(xFpgaHandler);
                 if(xSemaphoreTake(xMutex, (TickType_t)5) == pdTRUE)
@@ -172,7 +171,7 @@ static void vFpgaTask(void* argument)
             currentPointer += g_settings.numberOfCounters;
             vTaskDelay(g_settings.periodMs);
         }        
-        xQueueSend(xQueueHandler, (void*)firstBlockPointer, (TickType_t)5);
+        xQueueSend(xQueueHandler, (void*)&firstBlockPointer, (TickType_t)5);
 
         while(currentPointer < endPointer)
         {
@@ -181,7 +180,7 @@ static void vFpgaTask(void* argument)
             currentPointer += g_settings.numberOfCounters;
             vTaskDelay(g_settings.periodMs);
         }
-        xQueueSend(xQueueHandler, (void*)secondBlockPointer, (TickType_t)5);
+        xQueueSend(xQueueHandler, (void*)&secondBlockPointer, (TickType_t)5);
         currentPointer = firstBlockPointer;
     }
 }
