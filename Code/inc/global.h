@@ -15,8 +15,8 @@
 #define __MEMORY_BARRIER __asm volatile( "dmb" ::: "memory" )
 
 
-void g_Delay(uint32_t timeout);
-void g_ErrorHandler(uint8_t errorCode);
+void G_Delay(uint32_t timeout);
+void G_ErrorHandler(uint8_t errorCode);
 
 typedef union
 {
@@ -38,7 +38,7 @@ typedef union
 		uint8_t word5[4];
 		uint8_t periodMs[2];
 	}Field;
-}USettings;
+}SettingsUnion;
 
 struct g_settings
 {
@@ -46,10 +46,10 @@ struct g_settings
 	uint8_t periodMs;
 }g_settings;
 
-extern volatile uint8_t g_settings_numberOfCounters;
-extern volatile uint8_t g_settings_period;
-
-
+enum
+{
+    G_SDHC_ERROR = 5
+}G_ErrorCode;
 
 
 

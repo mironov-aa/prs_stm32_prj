@@ -9,7 +9,7 @@
 
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
-#include "SDHC_card_driver.h"
+#include "sdhc_card_driver.h"
 #include "stm32f072xb.h"
 
 #define SECTOR_COUNT 0x700000
@@ -51,13 +51,12 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-	uint8_t* buffPointer = (uint8_t*)buff;
-	for(uint32_t i = 0; i < count; i++)
+	BYTE* buffPointer = buff;
+	for(UINT i = 0; i < count; i++)
 	{
 		SdhcCardReadBlock(buffPointer, sector + i);
 		buffPointer += 512;
 	}
-
 	return RES_OK;
 }
 
@@ -76,13 +75,12 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-	uint8_t* buffPointer = (uint8_t*)buff;
-	for(uint32_t i = 0; i < count; i++)
+	BYTE* buffPointer = (BYTE*)buff;
+	for(UINT i = 0; i < count; i++)
 	{
 		SdhcCardWriteBlock(buffPointer, sector + i);
 		buffPointer += 512;
 	}
-
 	return RES_OK;
 }
 
@@ -130,7 +128,6 @@ DRESULT disk_ioctl (
 	}
 }
 
-
 /*
  *
  *
@@ -149,10 +146,21 @@ bit4:0
  */
 DWORD get_fattime(void)
 {
-	return (((((RTC->DR & RTC_DR_YT) >> 20 ) * 10 ) + 20 + ((RTC->DR & RTC_DR_YU) >> 16)) << 25)  |
-		   (((((RTC->DR & RTC_DR_MT) >> 12 ) * 10 ) + ((RTC->DR & RTC_DR_MU) >> 8) << 21))  |
-		   (((((RTC->DR & RTC_DR_DT) >> 4) * 10 ) + (RTC->DR & RTC_DR_DU)) << 16)  |
-		   (((((RTC->TR & RTC_TR_HT) >> 20) * 10 ) + ((RTC->TR & RTC_TR_HU) >> 16)) << 11)  |
-		   (((((RTC->TR & RTC_TR_MNT) >> 12) * 10 ) + ((RTC->TR & RTC_TR_MNU) >> 8)) << 5) |
-		   (((((RTC->TR & RTC_TR_ST) >> 4) * 10 ) + (RTC->TR & RTC_TR_SU)) >> 1);// Seconds/2;
+	return (((((RTC->DR & RTC_DR_YT) >> 20 ) * 10 ) + 
+	                    20 + ((RTC->DR & RTC_DR_YU) >> 16)) << 25)  |
+	                    
+		   (((((RTC->DR & RTC_DR_MT) >> 12 ) * 10 ) + 
+		                      ((RTC->DR & RTC_DR_MU) >> 8) << 21))  |
+		                      
+		   (((((RTC->DR & RTC_DR_DT) >> 4) * 10 ) + 
+		                             (RTC->DR & RTC_DR_DU)) << 16)  |
+		                             
+		   (((((RTC->TR & RTC_TR_HT) >> 20) * 10 ) + 
+		                     ((RTC->TR & RTC_TR_HU) >> 16)) << 11)  |
+		   
+		   (((((RTC->TR & RTC_TR_MNT) >> 12) * 10 ) + 
+		                       ((RTC->TR & RTC_TR_MNU) >> 8)) << 5) |
+		   
+		   (((((RTC->TR & RTC_TR_ST) >> 4) * 10 ) + 
+		                       (RTC->TR & RTC_TR_SU)) >> 1);// Seconds/2;
 }

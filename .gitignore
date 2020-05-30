@@ -1,6 +1,9 @@
 .settings/
 .project
 .cproject
+.vscode/
+Build/
 Debug/
 *.launch
 .directory
+!Build/makefile

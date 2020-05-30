@@ -34,9 +34,9 @@
 #define USBD_PID                   0x5720
 
 #define USBD_LANGID_STRING         0x409
-#define USBD_MANUFACTURER_STRING   "STMicroelectronics"
+#define USBD_MANUFACTURER_STRING   "UrFU"
 
-#define USBD_PRODUCT_FS_STRING     "PRMS Storage"
+#define USBD_PRODUCT_FS_STRING     "PRS memory"
 
 #define USBD_CONFIGURATION_FS_STRING  "MSC Config"
 #define USBD_INTERFACE_FS_STRING      "MSC Interface"

@@ -1,13 +1,11 @@
-#include "PRMS_Configure.h"
-#include "PRMS_Tasks.h"
+#include "prs_configure.h"
+#include "prs_tasks.h"
 #include "main.h"
 
 int main(void)
 {
-
-	ConfigurePrms();
+	ConfigurePrs();
 	ConfigureFreeRtosTasks();
-
 	vTaskStartScheduler();
 	for(;;);
 }

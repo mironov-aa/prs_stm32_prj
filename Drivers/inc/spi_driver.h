@@ -23,16 +23,16 @@ void SPI1_OnlyReceiveBlockDMA(uint8_t* bufferOut);
 
 static inline void SPI1_CsLow()
 {
-	GPIOA->BSRR |= GPIO_BSRR_BR_4;
+    GPIOA->BSRR |= GPIO_BSRR_BR_4;
 }
 
 static inline void SPI1_CsHigh()
 {
-	GPIOA->BSRR |= GPIO_BSRR_BS_4;
+    GPIOA->BSRR |= GPIO_BSRR_BS_4;
 }
 
 /*_______________________SPI2: FPGA___________________*/
-void SPI2_OnlyReceive(uint16_t* bufferOut, uint32_t countHalfWords);
+void SPI2_OnlyReceive(uint8_t* bufferOut, uint32_t countBytes);
 
 
 

@@ -27,7 +27,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_msc_mem.h"
-#include "SDHC_card_driver.h"
+#include "sdhc_card_driver.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -49,9 +49,9 @@ const int8_t  STORAGE_Inquirydata[] = {
   0x00,
   0x00,	
   0x00,
-  'S', 'T', 'M', ' ', ' ', ' ', ' ', ' ', /* Manufacturer : 8 bytes */
-  'm', 'i', 'c', 'r', 'o', 'S', 'D', ' ', /* Product      : 16 Bytes */
-  'F', 'l', 'a', 's', 'h', ' ', ' ', ' ',
+  'P', 'R', 'S', ' ', ' ', ' ', ' ', ' ', /* Manufacturer : 8 bytes */
+  'F', 'l', 'a', 's', 'h', ' ', ' ', ' ', /* Product      : 16 Bytes */
+  'm', 'e', 'm', 'o', 'r', 'y', ' ', ' ',
   '1', '.', '0' ,'0',                     /* Version      : 4 Bytes */
 }; 
 
@@ -59,23 +59,18 @@ __IO uint32_t count = 0;
 /* Private function prototypes -----------------------------------------------*/
 int8_t STORAGE_Init (uint8_t lun);
 
-int8_t STORAGE_GetCapacity (uint8_t lun, 
-                           uint32_t *block_num, 
+int8_t STORAGE_GetCapacity(uint8_t lun, uint32_t *block_num, 
                            uint32_t *block_size);
 
-int8_t  STORAGE_IsReady (uint8_t lun);
+int8_t STORAGE_IsReady(uint8_t lun);
 
-int8_t  STORAGE_IsWriteProtected (uint8_t lun);
+int8_t STORAGE_IsWriteProtected(uint8_t lun);
 
-int8_t STORAGE_Read (uint8_t lun, 
-                        uint8_t *buf, 
-                        uint32_t blk_addr,
-                        uint16_t blk_len);
+int8_t STORAGE_Read(uint8_t lun, uint8_t *buf, 
+                    uint32_t blk_addr, uint16_t blk_len);
 
-int8_t STORAGE_Write (uint8_t lun, 
-                        uint8_t *buf, 
-                        uint32_t blk_addr,
-                        uint16_t blk_len);
+int8_t STORAGE_Write(uint8_t lun, uint8_t *buf, 
+                     uint32_t blk_addr, uint16_t blk_len);
 
 int8_t STORAGE_GetMaxLun (void);
 
@@ -150,10 +145,8 @@ int8_t  STORAGE_IsWriteProtected (uint8_t lun)
   * @param  blk_len : number of blocks to be read
   * @retval Status
   */
-int8_t STORAGE_Read (uint8_t lun, 
-                 uint8_t *buf, 
-                 uint32_t blk_addr,                       
-                 uint16_t blk_len)
+int8_t STORAGE_Read(uint8_t lun, uint8_t *buf, 
+                    uint32_t blk_addr, uint16_t blk_len)
 {
   SdhcCardReadBlock(buf, blk_addr);
   return 0;
@@ -166,10 +159,8 @@ int8_t STORAGE_Read (uint8_t lun,
   * @param  blk_len : number of blocks to be read
   * @retval Status
   */
-int8_t STORAGE_Write (uint8_t lun, 
-                  uint8_t *buf, 
-                  uint32_t blk_addr,
-                  uint16_t blk_len)
+int8_t STORAGE_Write (uint8_t lun, uint8_t *buf, 
+                      uint32_t blk_addr, uint16_t blk_len)
 {
   SdhcCardWriteBlock(buf, blk_addr);
   return (0);

@@ -1,5 +1,5 @@
 /*
- * SDHC_card_driver.h
+ * sdhc_card_driver.h
  *
  *  Created on: Mar 5, 2020
  *      Author: mironov-aa
@@ -10,8 +10,8 @@
 #include <stdint.h>
 
 uint8_t SdhcCardInitialize();
-void SdhcCardReadBlock(uint8_t* buffer_out, uint32_t block_index);
-void SdhcCardWriteBlock(uint8_t* buffer_in, uint32_t block_index);
+void SdhcCardReadBlock(uint8_t* bufferOut, uint32_t blockIndex);
+void SdhcCardWriteBlock(uint8_t* bufferIn, uint32_t blockIndex);
 
 
 #endif /* INC_SDHC_CARD_DRIVER_H_ */

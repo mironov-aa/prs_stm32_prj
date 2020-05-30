@@ -1,11 +1,11 @@
 /*
- * PRMS_Tasks.h
+ * prs_tasks.h
  *
  *  Created on: Feb 21, 2020
  *      Author: mironov-aa
  */
-#ifndef INC_PRMS_TASKS_H_
-#define INC_PRMS_TASKS_H_
+#ifndef INC_PRS_TASKS_H_
+#define INC_PRS_TASKS_H_
 
 #include "stm32f0xx.h"
 #include "FreeRTOS.h"
@@ -18,7 +18,8 @@ void ConfigureFreeRtosTasks(void);
 
 //Default FreeRTOS tasks
 void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
-								   StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize);
+					                         StackType_t **ppxIdleTaskStackBuffer, 
+                                   uint32_t *pulIdleTaskStackSize);
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char* pcTaskName);
 void vApplicationIdleHook();
